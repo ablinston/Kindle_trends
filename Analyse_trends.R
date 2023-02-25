@@ -4,9 +4,25 @@
 library(readxl)
 library(data.table)
 library(dplyr)
+library(quantmod)
+library(ggplot2)
+
+# Inputs ------------------------------------------------------------------
+
 
 # Data files should be exported from the KDP dashboard and saved in a single folder
 kdp_data_location <- "F:/Writing - Book/Sales Data/KDP"
+
+# Set the average royalty rate to use for KENP (in USD)
+kenp_royalty_per_page_read <- 0.004561577
+
+# Define how many days history to include in the final charts
+days <- 120 
+
+
+# Calculations ------------------------------------------------------------
+
+
 
 # Read in data files
 setwd(kdp_data_location)
@@ -59,3 +75,50 @@ sales_data_no_duplicates <-
 kenp_data_no_duplicates <-
   unique(kenp_data, by = c("Date", "ASIN", "Marketplace"))
          
+# Compute sales figures in GBP
+
+# Get currencies needed for conversion
+currency_conversions <- 
+  getQuote(paste0("GBP", 
+                  unique(sales_data_no_duplicates$Currency), "=X"))
+
+currency_lookup <- 
+  data.table(Currency = unique(sales_data_no_duplicates$Currency),
+             XR = currency_conversions$Open)
+
+# Merge exchange rates onto table
+sales_data_no_duplicates <-
+  merge(
+    sales_data_no_duplicates,
+    currency_lookup,
+    by = "Currency"
+  )
+
+# Compute GBP sales
+sales_data_no_duplicates[, GBP_royalty := Royalty / XR]
+setnames(sales_data_no_duplicates, c("Royalty Date", "ASIN/ISBN"), c("Date", "ASIN"))
+
+# Compute GBP KENP
+kenp_data_no_duplicates[, kenp := fifelse(is.na(`Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`),
+                                          `Kindle Edition Normalized Page (KENP) Read`,
+                                          `Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`)]
+kenp_data_no_duplicates[, GBP_royalty := kenp * kenp_royalty_per_page_read / currency_lookup$XR[currency_lookup$Currency == "USD"]]
+
+# Sum all royalties for each date
+total_royalties <- rbindlist(list(sales_data_no_duplicates[, .(Date, ASIN, Marketplace, GBP_royalty)],
+                                  kenp_data_no_duplicates[, .(Date, ASIN, Marketplace, GBP_royalty)]))
+
+# Fix format of date
+total_royalties[, Date := as.Date(Date, "%Y-%m-%d")]
+
+# Aggregate by date
+aggregated_royalties <- total_royalties[, .(Royalty = sum(GBP_royalty)), keyby = Date]
+
+# Compute 7-day moving average
+aggregated_royalties[, Royalty_ma := frollmean(Royalty, n = 7, algo = "exact", align = "right")]
+
+# Plot the moving average as a chart
+ggplot(aggregated_royalties %>% tail(days),
+       aes(x = Date, y = Royalty_ma)) +
+  geom_line() +
+  ylim(0, 70)
