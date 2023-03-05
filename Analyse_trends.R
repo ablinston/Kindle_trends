@@ -41,7 +41,7 @@ for (file in files_list) {
       as.data.table
     
     # Kindle unlimited page reads
-    kenp_data2 <- 
+    kenp_data <- 
       read_excel(file, sheet = "KENP Read") %>%
       as.data.table
     
