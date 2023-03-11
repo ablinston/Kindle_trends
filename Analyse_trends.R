@@ -111,14 +111,20 @@ total_royalties <- rbindlist(list(sales_data_no_duplicates[, .(Date, ASIN, Marke
 # Fix format of date
 total_royalties[, Date := as.Date(Date, "%Y-%m-%d")]
 
+##########################################
+# Filters
+filtered_royalties <- total_royalties[ASIN == 'B087676DTB' & Marketplace == 'Amazon.co.uk',]
+
+##########################################
+
 # Aggregate by date
-aggregated_royalties <- total_royalties[, .(Royalty = sum(GBP_royalty)), keyby = Date]
+aggregated_royalties <- filtered_royalties[, .(Royalty = sum(GBP_royalty)), keyby = Date]
 
 # Compute 7-day moving average
-aggregated_royalties[, Royalty_ma := frollmean(Royalty, n = 7, algo = "exact", align = "right")]
+aggregated_royalties[, Royalty_ma := frollmean(Royalty, n = 14, algo = "exact", align = "right")]
 
 # Plot the moving average as a chart
 ggplot(aggregated_royalties %>% tail(days),
        aes(x = Date, y = Royalty_ma)) +
   geom_line() +
-  ylim(0, 70)
+  ylim(0, max(aggregated_royalties$Royalty_ma))
