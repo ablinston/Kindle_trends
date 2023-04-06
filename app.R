@@ -184,7 +184,7 @@ server <- function(input, output) {
       
       # Combined the data to allow filtering
       if (!is.null(data_output$wide_all_markets)) {
-        data_output$wide_all_markets$Marketplace <- "All"
+        data_output$wide_all_markets[, Marketplace := "All"]
         data_output$wide_combined <-
           rbindlist(list(data_output$wide_all_markets,
                          data_output$wide_split_markets),
@@ -278,7 +278,7 @@ server <- function(input, output) {
       # Create a summary of all the read through rates for all markets
       pivot_cols_1 <- colnames(data_output$wide_combined)[grepl("_readthrough_", colnames(data_output$wide_combined))]
       pivot_cols_2 <- colnames(data_output$wide_combined)[grepl("_sample_size_", colnames(data_output$wide_combined))]
-      
+
       cbind(
         data_output$wide_combined[, c("Date", "Marketplace", pivot_cols_1), with = FALSE] %>%
           pivot_longer(
@@ -309,8 +309,8 @@ server <- function(input, output) {
         select(NAME, MARKETPLACE, CHANNEL, `READ-THROUGH RATE`, `SAMPLE SIZE`)
     }
   })
-  
-  
+
+
   output$chart_VL_sales_readthrough_all <- renderPlot({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
       data_output$readthrough_filtered %>%
@@ -320,7 +320,7 @@ server <- function(input, output) {
         ggtitle("Sales read-through")
     }
   })
-  
+
   output$chart_VL_ku_readthrough_all <- renderPlot({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
       data_output$readthrough_filtered %>%
@@ -330,7 +330,7 @@ server <- function(input, output) {
         ggtitle("KU read-through")
     }
   })
-  
+
   output$chart_fate_sales_readthrough_all <- renderPlot({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
       data_output$readthrough_filtered %>%
@@ -340,7 +340,7 @@ server <- function(input, output) {
         ggtitle("Sales read-through")
     }
   })
-  
+
   output$chart_fate_ku_readthrough_all <- renderPlot({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
       data_output$readthrough_filtered %>%
@@ -350,7 +350,7 @@ server <- function(input, output) {
         ggtitle("KU read-through")
     }
   })
-  
+
   output$chart_revenge_sales_readthrough_all <- renderPlot({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
       data_output$readthrough_filtered %>%
@@ -360,7 +360,7 @@ server <- function(input, output) {
         ggtitle("Sales read-through")
     }
   })
-  
+
   output$chart_revenge_ku_readthrough_all <- renderPlot({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
       data_output$readthrough_filtered %>%
