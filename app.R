@@ -47,9 +47,16 @@ ui <- navbarPage(
   ),
   tabPanel("Read-through",
            fluidRow(
-             column(6, numericInput("rolling_sum_days", "Historic days to sum to calculate read-through", value = 90)),
-             column(6, numericInput("historic_days_readthrough", "Days of history to view", value = 360))
+             column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 90)),
+             column(6, numericInput("historic_days_readthrough", "History to view", value = 360))
              ),
+           h2("Summary"),
+           tableOutput("table_readthrough"),
+           br(),
+           radioButtons("readthrough_filter", "Read-through marketplace", 
+                        choices = c("All", "Amazon.com", "Amazon.co.uk", "Amazon.com.au", "Amazon.ca"), 
+                        selected = "All"),
+           br(),
            h2("Viridian Legion"),
            fluidRow(
              column(6, plotOutput("chart_VL_sales_readthrough_all")),
@@ -82,7 +89,7 @@ server <- function(input, output) {
     data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                             input$kenp_royalty_per_page_read)
     removeNotification("loading")
-    browser()
+
   })
   
   observeEvent(input$save, {
@@ -150,7 +157,7 @@ server <- function(input, output) {
                                                     algo = "exact",
                                                     align = "right"),
           by = c("Marketplace")]
-        
+
         # If not the first book in the series, compute the read-through rate                  
         if (book > 1) {
           prior_asin <- series_info$ASIN[series_info$book == (book - 1)]
@@ -158,17 +165,45 @@ server <- function(input, output) {
           data_output$wide_all_markets[, (paste0("sales_readthrough_", asin)) := get(paste0("sum_order_", asin)) / get(paste0("sum_order_", prior_asin))
           ][, (paste0("ku_readthrough_", asin)) := (
             (get(paste0("sum_kenp_", asin)) / series_info$kenp_length[series_info$book == book]) / 
-              (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1]))]
+              (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1]))
+            ][, (paste0("ku_sample_size_", asin)) := (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1])
+              ][, (paste0("sales_sample_size_", asin)) := get(paste0("sum_order_", prior_asin))]
           
           data_output$wide_split_markets[, (paste0("sales_readthrough_", asin)) := get(paste0("sum_order_", asin)) / get(paste0("sum_order_", prior_asin)),
                                        by = c("Marketplace")
           ][, (paste0("ku_readthrough_", asin)) := (
             (get(paste0("sum_kenp_", asin)) / series_info$kenp_length[series_info$book == book]) / 
               (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1])),
-            by = c("Marketplace")]
+            by = c("Marketplace")
+            ][, (paste0("ku_sample_size_", asin)) := (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1]),
+              by = c("Marketplace")
+            ][, (paste0("sales_sample_size_", asin)) := get(paste0("sum_order_", prior_asin)),
+              by = c("Marketplace")]
         }
-        
       }
+      
+      # Combined the data to allow filtering
+      if (!is.null(data_output$wide_all_markets)) {
+        data_output$wide_all_markets$Marketplace <- "All"
+        data_output$wide_combined <-
+          rbindlist(list(data_output$wide_all_markets,
+                         data_output$wide_split_markets),
+                    fill = TRUE)
+      }
+    }
+    # browser()
+  })
+  
+  # Filter the read-through data based on selections
+  observe({
+    if(!is.null(data_output$combined_data) &
+       input$historic_days_readthrough > 0 &
+       input$rolling_sum_days > 0 &
+       !is.na(input$readthrough_filter)){
+
+      data_output$readthrough_filtered <-
+        data_output$wide_combined[(Date >= max(Date) - input$historic_days_readthrough) &
+                                    (Marketplace == input$readthrough_filter),]
     }
   })
   
@@ -237,9 +272,48 @@ server <- function(input, output) {
     }
   })
   
+  
+  output$table_readthrough <- renderTable({
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      # Create a summary of all the read through rates for all markets
+      pivot_cols_1 <- colnames(data_output$wide_combined)[grepl("_readthrough_", colnames(data_output$wide_combined))]
+      pivot_cols_2 <- colnames(data_output$wide_combined)[grepl("_sample_size_", colnames(data_output$wide_combined))]
+      
+      cbind(
+        data_output$wide_combined[, c("Date", "Marketplace", pivot_cols_1), with = FALSE] %>%
+          pivot_longer(
+            cols = pivot_cols_1,
+            names_to = c("channel", "ASIN"),
+            names_sep = "_readthrough_",
+            values_to = "Read-through rate"
+          ) %>%
+          filter(Date == max(Date)),
+        data_output$wide_combined[, c("Date", "Marketplace", pivot_cols_2), with = FALSE] %>%
+          pivot_longer(
+            cols = pivot_cols_2,
+            names_to = c("channel", "ASIN"),
+            names_sep = "_sample_size_",
+            values_to = "Sample Size"
+          ) %>%
+          filter(Date == max(Date)) %>%
+          select(`Sample Size`)
+      ) %>%
+        mutate(
+          `Read-through rate` = round(100 * `Read-through rate`, 1),
+          `Sample Size` = round(`Sample Size`, 0)) %>%
+        merge(series_info[, c("ASIN", "name", "book")],
+              by = "ASIN") %>%
+        filter(`Sample Size` > 10) %>%
+        arrange(book, channel, Marketplace) %>%
+        rename_with(toupper) %>%
+        select(NAME, MARKETPLACE, CHANNEL, `READ-THROUGH RATE`, `SAMPLE SIZE`)
+    }
+  })
+  
+  
   output$chart_VL_sales_readthrough_all <- renderPlot({
-    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = sales_readthrough_B08766L2BZ)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B08766L2BZ)) +
@@ -248,8 +322,8 @@ server <- function(input, output) {
   })
   
   output$chart_VL_ku_readthrough_all <- renderPlot({
-    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = ku_readthrough_B08766L2BZ)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B08766L2BZ)) +
@@ -258,8 +332,8 @@ server <- function(input, output) {
   })
   
   output$chart_fate_sales_readthrough_all <- renderPlot({
-    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = sales_readthrough_B09GPMRTF7)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B09GPMRTF7)) +
@@ -268,8 +342,8 @@ server <- function(input, output) {
   })
   
   output$chart_fate_ku_readthrough_all <- renderPlot({
-    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = ku_readthrough_B09GPMRTF7)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B09GPMRTF7)) +
@@ -278,8 +352,8 @@ server <- function(input, output) {
   })
   
   output$chart_revenge_sales_readthrough_all <- renderPlot({
-    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = sales_readthrough_B0BHR5YXXV)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B0BHR5YXXV)) +
@@ -288,14 +362,15 @@ server <- function(input, output) {
   })
   
   output$chart_revenge_ku_readthrough_all <- renderPlot({
-    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = ku_readthrough_B0BHR5YXXV)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B0BHR5YXXV)) +
         ggtitle("KU read-through")
     }
   })
+  
 }
 
 shinyApp(ui = ui, server = server)
