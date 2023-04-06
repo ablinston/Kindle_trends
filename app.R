@@ -238,8 +238,8 @@ server <- function(input, output) {
   })
   
   output$chart_VL_sales_readthrough_all <- renderPlot({
-    if(input$rolling_sum_days > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
+      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
         ggplot(aes(x = Date, y = sales_readthrough_B08766L2BZ)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B08766L2BZ)) +
@@ -248,8 +248,8 @@ server <- function(input, output) {
   })
   
   output$chart_VL_ku_readthrough_all <- renderPlot({
-    if(input$rolling_sum_days > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
+      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
         ggplot(aes(x = Date, y = ku_readthrough_B08766L2BZ)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B08766L2BZ)) +
@@ -258,8 +258,8 @@ server <- function(input, output) {
   })
   
   output$chart_fate_sales_readthrough_all <- renderPlot({
-    if(input$rolling_sum_days > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
+      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
         ggplot(aes(x = Date, y = sales_readthrough_B09GPMRTF7)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B09GPMRTF7)) +
@@ -268,8 +268,8 @@ server <- function(input, output) {
   })
   
   output$chart_fate_ku_readthrough_all <- renderPlot({
-    if(input$rolling_sum_days > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
+      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
         ggplot(aes(x = Date, y = ku_readthrough_B09GPMRTF7)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B09GPMRTF7)) +
@@ -278,8 +278,8 @@ server <- function(input, output) {
   })
   
   output$chart_revenge_sales_readthrough_all <- renderPlot({
-    if(input$rolling_sum_days > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
+      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
         ggplot(aes(x = Date, y = sales_readthrough_B0BHR5YXXV)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B0BHR5YXXV)) +
@@ -288,8 +288,8 @@ server <- function(input, output) {
   })
   
   output$chart_revenge_ku_readthrough_all <- renderPlot({
-    if(input$rolling_sum_days > 0 & !is.null(data_output$wide_all_markets)) {
-      data_output$wide_all_markets %>%
+    if(input$historic_days_readthrough > 0 & !is.null(data_output$wide_all_markets)) {
+      data_output$wide_all_markets[Date >= max(Date) - input$historic_days_readthrough,] %>%
         ggplot(aes(x = Date, y = ku_readthrough_B0BHR5YXXV)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B0BHR5YXXV)) +
