@@ -59,54 +59,91 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
   # # For debugging
   # data_list <- load_kdp_files("F:/Writing - Book/Sales Data/KDP")
   # kenp_royalty_per_page_read <- 0.004561577
-  
-  # Remove any duplicate rows that have been included by mistake
+
+  # Remove any duplicate rows that have been included by mistake and remove free giveaways
   sales_data_no_duplicates <-
-    unique(data_list$sales_data, by = c("Royalty Date", "ASIN/ISBN", "Marketplace", "Royalty Type", "Transaction Type"))
+    data_list$sales_data[
+      # Royalty != 0,][
+        , .(
+          `Net Units Sold` = sum(`Net Units Sold`, na.rm = TRUE),
+          Royalty = sum(Royalty, na.rm = TRUE),
+          Currency = first(Currency)
+        ),
+        by = c("Royalty Date", "ASIN/ISBN", "Marketplace")]
   
   kenp_data_no_duplicates <-
-    unique(data_list$kenp_data, by = c("Date", "ASIN", "Marketplace"))
-           
+    data_list$kenp_data[, .(kenp = sum(`Kindle Edition Normalized Page (KENP) Read`, na.rm = TRUE) +
+                              sum(`Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`, na.rm = TRUE)),
+                        by = c("Date", "ASIN", "Marketplace")]
+  
+  # Fix format of date
+  sales_data_no_duplicates[, Date := as.Date(`Royalty Date`, "%Y-%m-%d")]
+  kenp_data_no_duplicates[, Date := as.Date(Date, "%Y-%m-%d")]
+  
+  # Fill in missing days
+  sales_data_all_days <- 
+    data.table(expand.grid(
+      Date = seq(as.Date(min(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date)),
+                 as.Date(max(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date)),
+                 by = "days"
+      ),
+      `ASIN/ISBN` = unique(sales_data_no_duplicates$`ASIN/ISBN`),
+      Marketplace = unique(sales_data_no_duplicates$Marketplace)
+    )) %>%
+    merge(sales_data_no_duplicates,
+          by = c("Date", "ASIN/ISBN", "Marketplace"),
+          all.x = TRUE)
+  
+  kenp_data_all_days <- 
+    data.table(expand.grid(
+      Date = seq(as.Date(min(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date)),
+                 as.Date(max(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date)),
+                 by = "days"
+      ),
+      ASIN = unique(kenp_data_no_duplicates$ASIN),
+      Marketplace = unique(kenp_data_no_duplicates$Marketplace)
+    )) %>%
+    merge(kenp_data_no_duplicates,
+          by = c("Date", "ASIN", "Marketplace"),
+          all.x = TRUE)
   # Compute sales figures in GBP
   
   # Get currencies needed for conversion
   currency_conversions <- 
     getQuote(paste0("GBP", 
-                    unique(sales_data_no_duplicates$Currency), "=X"))
+                    unique(sales_data_all_days$Currency), "=X"))
   
   currency_lookup <- 
-    data.table(Currency = unique(sales_data_no_duplicates$Currency),
+    data.table(Currency = unique(sales_data_all_days$Currency),
                XR = currency_conversions$Open)
   
   # Merge exchange rates onto table
-  sales_data_no_duplicates <-
+  sales_data_all_days <-
     merge(
-      sales_data_no_duplicates,
+      sales_data_all_days,
       currency_lookup,
       by = "Currency"
     )
-  
-  # Remove free giveaway
-  sales_data_no_duplicates <- sales_data_no_duplicates[Royalty != 0,]
-  
+
   # Compute GBP sales
-  sales_data_no_duplicates[, ":=" (GBP_royalty = Royalty / XR)]
-  setnames(sales_data_no_duplicates, c("Royalty Date", "ASIN/ISBN", "Net Units Sold"), c("Date", "ASIN", "orders"))
+  sales_data_all_days[, ":=" (GBP_royalty = Royalty / XR)]
+  setnames(sales_data_all_days, c("ASIN/ISBN", "Net Units Sold"), c("ASIN", "orders"))
   
   # Compute GBP KENP
-  kenp_data_no_duplicates[, kenp := fifelse(is.na(`Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`),
-                                            `Kindle Edition Normalized Page (KENP) Read`,
-                                            `Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`)]
-  kenp_data_no_duplicates[, GBP_royalty := kenp * kenp_royalty_per_page_read / currency_lookup$XR[currency_lookup$Currency == "USD"]]
+  kenp_data_all_days[, GBP_royalty := kenp * kenp_royalty_per_page_read / currency_lookup$XR[currency_lookup$Currency == "USD"]]
   
   # Sum all royalties for each date
-  all_data <- rbindlist(list(sales_data_no_duplicates[, .(Date, ASIN, Marketplace, GBP_royalty, orders)],
-                             kenp_data_no_duplicates[, .(Date, ASIN, Marketplace, GBP_royalty, kenp)]),
+  all_data <- rbindlist(list(sales_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty, orders)],
+                             kenp_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty, kenp)]),
                         fill = TRUE)
-  
-  # Fix format of date
-  all_data[, Date := as.Date(Date, "%Y-%m-%d")]
 
+  # Aggregate the data to include one entry per day
+  all_data <- 
+    all_data[, .(GBP_royalty = sum(GBP_royalty, na.rm = TRUE),
+                 orders = sum(orders, na.rm = TRUE),
+                 kenp = sum(kenp, na.rm = TRUE)),
+             by = c("Date", "ASIN", "Marketplace")]
+  
   return(all_data)
   
 }
