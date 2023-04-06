@@ -60,9 +60,14 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
   # data_list <- load_kdp_files("F:/Writing - Book/Sales Data/KDP")
   # kenp_royalty_per_page_read <- 0.004561577
 
+  setkeyv(data_list$sales_data, NULL)
+  setkeyv(data_list$kenp_data, NULL)
+  
   # Remove any duplicate rows that have been included by mistake and remove free giveaways
   sales_data_no_duplicates <-
-    data_list$sales_data[
+    data_list$sales_data %>%
+    unique(by = c("Royalty Date", "Title", "Author Name", "ASIN/ISBN", "Marketplace", "Royalty Type", "Transaction Type", "Currency")) %>%
+    .[
       # Royalty != 0,][
         , .(
           `Net Units Sold` = sum(`Net Units Sold`, na.rm = TRUE),
@@ -72,7 +77,9 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
         by = c("Royalty Date", "ASIN/ISBN", "Marketplace")]
   
   kenp_data_no_duplicates <-
-    data_list$kenp_data[, .(kenp = sum(`Kindle Edition Normalized Page (KENP) Read`, na.rm = TRUE) +
+    data_list$kenp_data %>%
+    unique(by = c("Date", "Title", "Author Name", "ASIN", "Marketplace")) %>%
+    .[, .(kenp = sum(`Kindle Edition Normalized Page (KENP) Read`, na.rm = TRUE) +
                               sum(`Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`, na.rm = TRUE)),
                         by = c("Date", "ASIN", "Marketplace")]
   
