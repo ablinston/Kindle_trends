@@ -62,11 +62,12 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
 
   setkeyv(data_list$sales_data, NULL)
   setkeyv(data_list$kenp_data, NULL)
-  
+
   # Remove any duplicate rows that have been included by mistake and remove free giveaways
   sales_data_no_duplicates <-
     data_list$sales_data %>%
-    unique(by = c("Royalty Date", "Title", "Author Name", "ASIN/ISBN", "Marketplace", "Royalty Type", "Transaction Type", "Currency")) %>%
+    unique(by = c("Royalty Date", "Title", "Author Name", "ASIN/ISBN", "Marketplace", "Royalty Type", "Transaction Type", "Currency"),
+           fromLast = TRUE) %>%
     .[
       # Royalty != 0,][
         , .(
@@ -78,7 +79,8 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
   
   kenp_data_no_duplicates <-
     data_list$kenp_data %>%
-    unique(by = c("Date", "Title", "Author Name", "ASIN", "Marketplace")) %>%
+    unique(by = c("Date", "Title", "Author Name", "ASIN", "Marketplace"),
+           fromLast = TRUE) %>%
     .[, .(kenp = sum(`Kindle Edition Normalized Page (KENP) Read`, na.rm = TRUE) +
                               sum(`Kindle Edition Normalized Pages (KENP) Read from KU and KOLL`, na.rm = TRUE)),
                         by = c("Date", "ASIN", "Marketplace")]
@@ -86,6 +88,10 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
   # Fix format of date
   sales_data_no_duplicates[, Date := as.Date(`Royalty Date`, "%Y-%m-%d")]
   kenp_data_no_duplicates[, Date := as.Date(Date, "%Y-%m-%d")]
+  
+  # Sort by date
+  setorder(sales_data_no_duplicates, Date)
+  setorder(kenp_data_no_duplicates, Date)
   
   # Fill in missing days
   sales_data_all_days <- 
