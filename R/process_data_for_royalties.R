@@ -66,7 +66,7 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
           by = c("Date", "ASIN", "Marketplace"),
           all.x = TRUE)
   # Compute sales figures in GBP
-  
+  browser()
   # Get currencies needed for conversion
   currency_conversions <- 
     getQuote(paste0("GBP", 
