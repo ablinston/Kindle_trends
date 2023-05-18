@@ -1,16 +1,7 @@
 ## This script will read in data from the KDP dashboard and then analyse
 # smoothed trends in sales and estimated royalties over time
 
-library(readxl)
-library(data.table)
-library(dplyr)
-library(quantmod)
-library(ggplot2)
-library(shiny)
-library(tidyr)
-
-source("C:/Users/Andy/Documents/Kindle_trends/app_functions.R")
-series_info <- fread("C:/Users/Andy/Documents/Kindle_trends/series.csv")
+source("global.R")
 
 ui <- navbarPage(
   "KDP royalty analyser",
@@ -48,7 +39,7 @@ ui <- navbarPage(
   tabPanel("Read-through",
            fluidRow(
              column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 90)),
-             column(6, numericInput("historic_days_readthrough", "History to view", value = 360))
+             column(6, numericInput("historic_days_readthrough", "History to view", value = 120))
              ),
            h2("Summary"),
            tableOutput("table_readthrough"),
@@ -373,6 +364,5 @@ server <- function(input, output) {
   
 }
 
-shinyApp(ui = ui, server = server)
 
 
