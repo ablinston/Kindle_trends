@@ -65,16 +65,31 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
     merge(kenp_data_no_duplicates,
           by = c("Date", "ASIN", "Marketplace"),
           all.x = TRUE)
-  # Compute sales figures in GBP
-  browser()
-  # Get currencies needed for conversion
-  currency_conversions <- 
-    getQuote(paste0("GBP", 
-                    unique(sales_data_all_days$Currency), "=X"))
   
-  currency_lookup <- 
-    data.table(Currency = unique(sales_data_all_days$Currency),
-               XR = currency_conversions$Open)
+  # Compute sales figures in GBP
+
+  # Get currencies needed for conversion
+  # First check whether we can get currencies from net
+  currency_error <- try({getQuote(paste0("GBP", 
+                                         unique(sales_data_all_days$Currency), "=X"))})
+  
+  # If error, then grab currencies from a backup
+  if (class(currency_error) %in% c("error", "try-error")) {
+    warning("Unable to get live exchange rates. Using backup.")
+    currency_lookup <- fread("data/exchange_rates.csv")
+    # Otherwise, get them from the web
+  } else {
+    currency_conversions <- 
+      getQuote(paste0("GBP", 
+                      unique(sales_data_all_days$Currency), "=X"))
+    
+    currency_lookup <- 
+      data.table(Currency = unique(sales_data_all_days$Currency),
+                 XR = currency_conversions$Open)
+    
+    # Save in case of error next time
+    fwrite(currency_lookup, "data/exchange_rates.csv")
+  }
   
   # Merge exchange rates onto table
   sales_data_all_days <-

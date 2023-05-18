@@ -8,8 +8,6 @@ ui <- navbarPage(
   tabPanel("Data",
            textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Sales Data/KDP"),
            actionButton("load", "Load KDP Data"),
-           actionButton("save", "Save KDP Data"),
-           actionButton("quick_load", "Quick load KDP Data"),
            br()
            ),
   tabPanel("Royalties",
@@ -82,16 +80,7 @@ server <- function(input, output) {
     removeNotification("loading")
 
   })
-  
-  observeEvent(input$save, {
-    saveRDS(data_output$combined_data,
-            "temp.Rds")
-  })
-  
-  observeEvent(input$quick_load, {
-    data_output$combined_data <- readRDS(paste0(input$data_path, "/temp.Rds"))
-  })
-  
+
   # Filter the data ready for the charts
   observe({
     # Check whether the royalty data exists
