@@ -23,7 +23,7 @@ load_kdp_files <- function(kdp_data_location){
   # Loop through each file and add to data frame
   for (file in files_list) {
     
-    # showNotification(paste0("Processing file: ", file), id = "loading", duration = NULL)
+    showNotification(paste0("Processing file: ", file), id = "loading", duration = NULL)
     
     # If it's not already in the data then we process the file, otherwise skip
     if (!(file %in% existing_data_filenames)) {

@@ -30,6 +30,14 @@ ui <- navbarPage(
              column(6, plotOutput("chart_oblivion_UK"))
            ),
            fluidRow(
+             column(6, plotOutput("chart_all_books_Aus")),
+             column(6, plotOutput("chart_oblivion_Aus"))
+           ),
+           fluidRow(
+             column(6, plotOutput("chart_all_books_Can")),
+             column(6, plotOutput("chart_oblivion_Can"))
+           ),
+           fluidRow(
              column(6, plotOutput("chart_all_books_ROW")),
              column(6, plotOutput("chart_oblivion_ROW"))
            ),
@@ -236,9 +244,41 @@ server <- function(input, output) {
     }
   })
   
+  output$chart_all_books_Aus <- renderPlot({
+    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+      data_output$filtered_data[Marketplace == 'Amazon.com.au',] %>%
+        moving_average_royalty_chart(input$ma_days) +
+        ggtitle("All books, Australia")
+    }
+  })
+  
+  output$chart_oblivion_Aus <- renderPlot({
+    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+      data_output$filtered_data[Marketplace == 'Amazon.com.au' & ASIN == 'B087676DTB',] %>%
+        moving_average_royalty_chart(input$ma_days) +
+        ggtitle("Oblivion, Australia")
+    }
+  })
+  
+  output$chart_all_books_Can <- renderPlot({
+    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+      data_output$filtered_data[Marketplace == 'Amazon.ca',] %>%
+        moving_average_royalty_chart(input$ma_days) +
+        ggtitle("All books, Canada")
+    }
+  })
+  
+  output$chart_oblivion_Can <- renderPlot({
+    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+      data_output$filtered_data[Marketplace == 'Amazon.ca' & ASIN == 'B087676DTB',] %>%
+        moving_average_royalty_chart(input$ma_days) +
+        ggtitle("Oblivion, Canada")
+    }
+  })
+  
   output$chart_all_books_ROW <- renderPlot({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
-      data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk')),] %>%
+      data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')),] %>%
         moving_average_royalty_chart(input$ma_days) +
         ggtitle("All books, Rest of world")
     }
@@ -246,7 +286,7 @@ server <- function(input, output) {
   
   output$chart_oblivion_ROW <- renderPlot({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
-      data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk')) & ASIN == 'B087676DTB',] %>%
+      data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')) & ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) +
         ggtitle("Oblivion, Rest of world")
     }
