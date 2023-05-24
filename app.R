@@ -119,6 +119,10 @@ server <- function(input, output) {
         replace(is.na(.), 0) %>%
         as.data.table
       
+      # Order the data ready for rolling sums
+      setorderv(data_output$wide_all_markets, cols = c("Date"))
+      setorderv(data_output$wide_split_markets, cols = c("Marketplace", "Date"))
+      
       # Go through the books in the series and compute read-through
       for (book in series_info$book) {
         
@@ -295,6 +299,7 @@ server <- function(input, output) {
   
   output$table_readthrough <- renderTable({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
+      
       # Create a summary of all the read through rates for all markets
       pivot_cols_1 <- colnames(data_output$wide_combined)[grepl("_readthrough_", colnames(data_output$wide_combined))]
       pivot_cols_2 <- colnames(data_output$wide_combined)[grepl("_sample_size_", colnames(data_output$wide_combined))]

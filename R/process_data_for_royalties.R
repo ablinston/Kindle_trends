@@ -42,8 +42,8 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
   # Fill in missing days
   sales_data_all_days <- 
     data.table(expand.grid(
-      Date = seq(as.Date(min(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date)),
-                 as.Date(max(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date)),
+      Date = seq(as.Date(min(c(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date))),
+                 as.Date(max(c(sales_data_no_duplicates$Date, kenp_data_no_duplicates$Date))),
                  by = "days"
       ),
       `ASIN/ISBN` = unique(sales_data_no_duplicates$`ASIN/ISBN`),
@@ -117,6 +117,8 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
                  orders = sum(orders, na.rm = TRUE),
                  kenp = sum(kenp, na.rm = TRUE)),
              by = c("Date", "ASIN", "Marketplace")]
+  
+  setorderv(all_data, cols = c("Marketplace", "Date"))
   
   return(all_data)
   
