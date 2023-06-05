@@ -8,6 +8,7 @@ library(quantmod)
 library(ggplot2)
 library(shiny)
 library(tidyr)
+library(plotly)
 
 # Load all functions
 for (filename in list.files("R")) {

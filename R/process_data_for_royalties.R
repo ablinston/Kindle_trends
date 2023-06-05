@@ -70,6 +70,7 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
 
   # Get currencies needed for conversion
   # First check whether we can get currencies from net
+  # browser()
   currency_error <- try({getQuote(paste0("GBP", 
                                          unique(sales_data_all_days$Currency), "=X"))})
   

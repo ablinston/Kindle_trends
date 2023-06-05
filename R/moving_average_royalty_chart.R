@@ -9,12 +9,15 @@ moving_average_royalty_chart <- function(royalty_data, ma_days) {
   aggregated_royalties[, Royalty_ma := frollmean(Royalty, n = ma_days, algo = "exact", align = "right")]
   
   # Plot the moving average as a chart
+  chart <- ggplot(aggregated_royalties,
+                  aes(x = Date, y = Royalty_ma)) +
+    geom_line() +
+    ylim(0, max(aggregated_royalties$Royalty_ma))
+  
   
   return(
-    ggplot(aggregated_royalties,
-           aes(x = Date, y = Royalty_ma)) +
-      geom_line() +
-      ylim(0, max(aggregated_royalties$Royalty_ma))
+    ggplotly(chart) %>%
+      layout(margin = list(t = 50, b = 30))
   )
   
 }

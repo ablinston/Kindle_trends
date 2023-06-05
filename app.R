@@ -18,28 +18,28 @@ ui <- navbarPage(
            ),
            h2("Charts"),
            fluidRow(
-             column(6, plotOutput("chart_all_books_all_countries")),
-             column(6, plotOutput("chart_oblivion_all_countries"))
+             column(6, plotlyOutput("chart_all_books_all_countries")),
+             column(6, plotlyOutput("chart_oblivion_all_countries"))
            ),
            fluidRow(
-             column(6, plotOutput("chart_all_books_USA")),
-             column(6, plotOutput("chart_oblivion_USA"))
+             column(6, plotlyOutput("chart_all_books_USA")),
+             column(6, plotlyOutput("chart_oblivion_USA"))
            ),
            fluidRow(
-             column(6, plotOutput("chart_all_books_UK")),
-             column(6, plotOutput("chart_oblivion_UK"))
+             column(6, plotlyOutput("chart_all_books_UK")),
+             column(6, plotlyOutput("chart_oblivion_UK"))
            ),
            fluidRow(
-             column(6, plotOutput("chart_all_books_Aus")),
-             column(6, plotOutput("chart_oblivion_Aus"))
+             column(6, plotlyOutput("chart_all_books_Aus")),
+             column(6, plotlyOutput("chart_oblivion_Aus"))
            ),
            fluidRow(
-             column(6, plotOutput("chart_all_books_Can")),
-             column(6, plotOutput("chart_oblivion_Can"))
+             column(6, plotlyOutput("chart_all_books_Can")),
+             column(6, plotlyOutput("chart_oblivion_Can"))
            ),
            fluidRow(
-             column(6, plotOutput("chart_all_books_ROW")),
-             column(6, plotOutput("chart_oblivion_ROW"))
+             column(6, plotlyOutput("chart_all_books_ROW")),
+             column(6, plotlyOutput("chart_oblivion_ROW"))
            ),
   ),
   tabPanel("Read-through",
@@ -56,18 +56,18 @@ ui <- navbarPage(
            br(),
            h2("Viridian Legion"),
            fluidRow(
-             column(6, plotOutput("chart_VL_sales_readthrough_all")),
-             column(6, plotOutput("chart_VL_ku_readthrough_all"))
+             column(6, plotlyOutput("chart_VL_sales_readthrough_all")),
+             column(6, plotlyOutput("chart_VL_ku_readthrough_all"))
            ),
            h2("Fate Of The Slayer"),
            fluidRow(
-             column(6, plotOutput("chart_fate_sales_readthrough_all")),
-             column(6, plotOutput("chart_fate_ku_readthrough_all"))
+             column(6, plotlyOutput("chart_fate_sales_readthrough_all")),
+             column(6, plotlyOutput("chart_fate_ku_readthrough_all"))
            ),
            h2("Slayer's Revenge"),
            fluidRow(
-             column(6, plotOutput("chart_revenge_sales_readthrough_all")),
-             column(6, plotOutput("chart_revenge_ku_readthrough_all"))
+             column(6, plotlyOutput("chart_revenge_sales_readthrough_all")),
+             column(6, plotlyOutput("chart_revenge_ku_readthrough_all"))
            )
   )
 )
@@ -200,99 +200,99 @@ server <- function(input, output) {
   })
   
   # Create the charts for different books
-  output$chart_all_books_all_countries <- renderPlot({
+  output$chart_all_books_all_countries <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("All books, All countries")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "All books, All countries")
     }
   })
   
-  output$chart_oblivion_all_countries <- renderPlot({
+  output$chart_oblivion_all_countries <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("Oblivion, All countries")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "Oblivion, All countries")
     }
   })
   
-  output$chart_all_books_USA <- renderPlot({
+  output$chart_all_books_USA <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("All books, USA")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "All books, USA")
     }
   })
   
-  output$chart_oblivion_USA <- renderPlot({
+  output$chart_oblivion_USA <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("Oblivion, USA")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "Oblivion, USA")
     }
   })
   
-  output$chart_all_books_UK <- renderPlot({
+  output$chart_all_books_UK <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("All books, UK")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "All books, UK")
     }
   })
   
-  output$chart_oblivion_UK <- renderPlot({
+  output$chart_oblivion_UK <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("Oblivion, UK")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "Oblivion, UK")
     }
   })
   
-  output$chart_all_books_Aus <- renderPlot({
+  output$chart_all_books_Aus <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("All books, Australia")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "All books, Australia")
     }
   })
   
-  output$chart_oblivion_Aus <- renderPlot({
+  output$chart_oblivion_Aus <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("Oblivion, Australia")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "Oblivion, Australia")
     }
   })
   
-  output$chart_all_books_Can <- renderPlot({
+  output$chart_all_books_Can <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("All books, Canada")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "All books, Canada")
     }
   })
   
-  output$chart_oblivion_Can <- renderPlot({
+  output$chart_oblivion_Can <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("Oblivion, Canada")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "Oblivion, Canada")
     }
   })
   
-  output$chart_all_books_ROW <- renderPlot({
+  output$chart_all_books_ROW <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')),] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("All books, Rest of world")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "All books, Rest of world")
     }
   })
   
-  output$chart_oblivion_ROW <- renderPlot({
+  output$chart_oblivion_ROW <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')) & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) +
-        ggtitle("Oblivion, Rest of world")
+        moving_average_royalty_chart(input$ma_days) %>%
+        layout(title = "Oblivion, Rest of world")
     }
   })
   
@@ -336,63 +336,75 @@ server <- function(input, output) {
   })
 
 
-  output$chart_VL_sales_readthrough_all <- renderPlot({
+  output$chart_VL_sales_readthrough_all <- renderPlotly({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
-      data_output$readthrough_filtered %>%
+      temp <- data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = sales_readthrough_B08766L2BZ)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B08766L2BZ)) +
         ggtitle("Sales read-through")
+      
+      ggplotly(temp)
     }
   })
 
-  output$chart_VL_ku_readthrough_all <- renderPlot({
+  output$chart_VL_ku_readthrough_all <- renderPlotly({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
-      data_output$readthrough_filtered %>%
+      temp <- data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = ku_readthrough_B08766L2BZ)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B08766L2BZ)) +
         ggtitle("KU read-through")
+      
+      ggplotly(temp)
     }
   })
 
-  output$chart_fate_sales_readthrough_all <- renderPlot({
+  output$chart_fate_sales_readthrough_all <- renderPlotly({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
-      data_output$readthrough_filtered %>%
+      temp <- data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = sales_readthrough_B09GPMRTF7)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B09GPMRTF7)) +
         ggtitle("Sales read-through")
+      
+      ggplotly(temp)
     }
   })
 
-  output$chart_fate_ku_readthrough_all <- renderPlot({
+  output$chart_fate_ku_readthrough_all <- renderPlotly({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
-      data_output$readthrough_filtered %>%
+      temp <- data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = ku_readthrough_B09GPMRTF7)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B09GPMRTF7)) +
         ggtitle("KU read-through")
+      
+      ggplotly(temp)
     }
   })
 
-  output$chart_revenge_sales_readthrough_all <- renderPlot({
+  output$chart_revenge_sales_readthrough_all <- renderPlotly({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
-      data_output$readthrough_filtered %>%
+      temp <- data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = sales_readthrough_B0BHR5YXXV)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$sales_readthrough_B0BHR5YXXV)) +
         ggtitle("Sales read-through")
+      
+      ggplotly(temp)
     }
   })
 
-  output$chart_revenge_ku_readthrough_all <- renderPlot({
+  output$chart_revenge_ku_readthrough_all <- renderPlotly({
     if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {
-      data_output$readthrough_filtered %>%
+      temp <- data_output$readthrough_filtered %>%
         ggplot(aes(x = Date, y = ku_readthrough_B0BHR5YXXV)) +
         geom_line() +
         ylim(0, max(data_output$wide_all_markets$ku_readthrough_B0BHR5YXXV)) +
         ggtitle("KU read-through")
+      
+      ggplotly(temp)
     }
   })
   
