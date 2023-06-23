@@ -8,12 +8,18 @@ ui <- navbarPage(
   tabPanel("Data",
            textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Sales Data/KDP"),
            actionButton("load", "Load KDP Data"),
+           br(),
+           textInput("bank_data_path", label = "Path to read data files from", value = "../private/bank"),
+           actionButton("load_bank", "Load Bank Data"),
+           br(),
+           textInput("ams_data_path", label = "Path to read data files from", value = "../private/ams"),
+           actionButton("load_ams", "Load AMS Data"),
            br()
            ),
   tabPanel("Royalties",
            fluidRow(
              column(4, numericInput("historic_days", "Days of history to view", value = 120)),
-             column(4, numericInput("ma_days", "Days to take moving average across", value = 14)),
+             column(4, numericInput("ma_days", "Days to take moving average across", value = 7)),
              column(4, numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.004561577))
            ),
            h2("Charts"),
@@ -44,7 +50,7 @@ ui <- navbarPage(
   ),
   tabPanel("Read-through",
            fluidRow(
-             column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 90)),
+             column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 30)),
              column(6, numericInput("historic_days_readthrough", "History to view", value = 120))
              ),
            h2("Summary"),
@@ -69,6 +75,18 @@ ui <- navbarPage(
              column(6, plotlyOutput("chart_revenge_sales_readthrough_all")),
              column(6, plotlyOutput("chart_revenge_ku_readthrough_all"))
            )
+  ),
+  tabPanel("Net Income",
+           fluidRow(
+             column(4, numericInput("historic_days", "Days of history to view", value = 120)),
+             column(4, numericInput("ma_days", "Days to take moving average across", value = 14)),
+             column(4, numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.004561577))
+           ),
+           h2("Table"),
+           fluidRow(
+             column(6, plotlyOutput("chart_all_books_all_countries")),
+             column(6, plotlyOutput("chart_oblivion_all_countries"))
+           )
   )
 )
 
@@ -88,6 +106,40 @@ server <- function(input, output) {
     removeNotification("loading")
 
   })
+  
+  # observeEvent(input$load_bank, {
+  #   
+  #   data_output$raw_bank_data <- load_statements(input$bank_data_path)
+  #   
+  #   showNotification("Processing data...", id= "loading", duration = NULL)
+  #   
+  #   data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
+  #   removeNotification("loading")
+  #   
+  # })
+  # 
+  # observeEvent(input$load, {
+  #   
+  #   data_output$raw_data <- fread(file.path(input$ams_data_path, "ams.csv"))
+  #   
+  #   showNotification("Processing data...", id= "loading", duration = NULL)
+  #   
+  #   currency_lookup <- get_currency_lookup(c("GBPUSD=X"))
+  #   # Merge exchange rates onto table
+  #   ams_data <-
+  #     merge(
+  #       data_output$raw_data,
+  #       currency_lookup,
+  #       by = "Currency"
+  #     )
+  #   
+  #   # Compute GBP cost
+  #   ams_data[, ":=" (AMS_Ads = AMS / XR)]
+  #   data_output$ams_data <- ams_data
+  #   
+  #   removeNotification("loading")
+  #   
+  # })
 
   # Filter the data ready for the charts
   observe({
@@ -198,6 +250,15 @@ server <- function(input, output) {
                                     (Marketplace == input$readthrough_filter),]
     }
   })
+  
+  # observe({
+  #   if(!is.null(data_output$combined_data)){
+  #     data_output$net_income <-
+  #       aggregate_data_to_monthly(data_output$combined_data[Date >= "2022-10-01",],
+  #                                 data_output$bank_data,
+  #                                 data_output$ams_data)
+  #   }
+  # })
   
   # Create the charts for different books
   output$chart_all_books_all_countries <- renderPlotly({
