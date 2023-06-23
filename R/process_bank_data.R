@@ -1,6 +1,6 @@
 # This function processes raw bank data read in by the app.
 
-process_data <- function(dataset){
+process_bank_data <- function(dataset){
 
   # dataset <- copy(te)
 

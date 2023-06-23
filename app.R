@@ -9,10 +9,10 @@ ui <- navbarPage(
            textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Sales Data/KDP"),
            actionButton("load", "Load KDP Data"),
            br(),
-           textInput("bank_data_path", label = "Path to read data files from", value = "../private/bank"),
+           textInput("bank_data_path", label = "Path to read data files from", value = "./private/bank"),
            actionButton("load_bank", "Load Bank Data"),
            br(),
-           textInput("ams_data_path", label = "Path to read data files from", value = "../private/ams"),
+           textInput("ams_data_path", label = "Path to read data files from", value = "./private/ams"),
            actionButton("load_ams", "Load AMS Data"),
            br()
            ),
@@ -78,14 +78,11 @@ ui <- navbarPage(
   ),
   tabPanel("Net Income",
            fluidRow(
-             column(4, numericInput("historic_days", "Days of history to view", value = 120)),
-             column(4, numericInput("ma_days", "Days to take moving average across", value = 14)),
-             column(4, numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.004561577))
+
            ),
            h2("Table"),
            fluidRow(
-             column(6, plotlyOutput("chart_all_books_all_countries")),
-             column(6, plotlyOutput("chart_oblivion_all_countries"))
+
            )
   )
 )
@@ -107,39 +104,39 @@ server <- function(input, output) {
 
   })
   
-  # observeEvent(input$load_bank, {
-  #   
-  #   data_output$raw_bank_data <- load_statements(input$bank_data_path)
-  #   
-  #   showNotification("Processing data...", id= "loading", duration = NULL)
-  #   
-  #   data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
-  #   removeNotification("loading")
-  #   
-  # })
-  # 
-  # observeEvent(input$load, {
-  #   
-  #   data_output$raw_data <- fread(file.path(input$ams_data_path, "ams.csv"))
-  #   
-  #   showNotification("Processing data...", id= "loading", duration = NULL)
-  #   
-  #   currency_lookup <- get_currency_lookup(c("GBPUSD=X"))
-  #   # Merge exchange rates onto table
-  #   ams_data <-
-  #     merge(
-  #       data_output$raw_data,
-  #       currency_lookup,
-  #       by = "Currency"
-  #     )
-  #   
-  #   # Compute GBP cost
-  #   ams_data[, ":=" (AMS_Ads = AMS / XR)]
-  #   data_output$ams_data <- ams_data
-  #   
-  #   removeNotification("loading")
-  #   
-  # })
+  observeEvent(input$load_bank, {
+
+    data_output$raw_bank_data <- load_statements(input$bank_data_path)
+
+    showNotification("Processing data...", id= "loading", duration = NULL)
+
+    data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
+    removeNotification("loading")
+
+  })
+
+  observeEvent(input$load, {
+
+    data_output$raw_data <- fread(file.path(input$ams_data_path, "ams.csv"))
+
+    showNotification("Processing data...", id= "loading", duration = NULL)
+
+    currency_lookup <- get_currency_lookup(c("GBPUSD=X"))
+    # Merge exchange rates onto table
+    ams_data <-
+      merge(
+        data_output$raw_data,
+        currency_lookup,
+        by = "Currency"
+      )
+
+    # Compute GBP cost
+    ams_data[, ":=" (AMS_Ads = AMS / XR)]
+    data_output$ams_data <- ams_data
+
+    removeNotification("loading")
+
+  })
 
   # Filter the data ready for the charts
   observe({
