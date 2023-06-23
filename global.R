@@ -9,6 +9,7 @@ library(ggplot2)
 library(shiny)
 library(tidyr)
 library(plotly)
+library(lubridate)
 
 # Load all functions
 for (filename in list.files("R")) {

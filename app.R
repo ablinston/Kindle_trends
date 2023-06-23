@@ -7,13 +7,9 @@ ui <- navbarPage(
   "KDP royalty analyser",
   tabPanel("Data",
            textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Sales Data/KDP"),
-           actionButton("load", "Load KDP Data"),
-           br(),
            textInput("bank_data_path", label = "Path to read data files from", value = "./private/bank"),
-           actionButton("load_bank", "Load Bank Data"),
-           br(),
            textInput("ams_data_path", label = "Path to read data files from", value = "./private/ams"),
-           actionButton("load_ams", "Load AMS Data"),
+           actionButton("load", "Load All Data"),
            br()
            ),
   tabPanel("Royalties",
@@ -78,11 +74,10 @@ ui <- navbarPage(
   ),
   tabPanel("Net Income",
            fluidRow(
-
            ),
            h2("Table"),
            fluidRow(
-
+             column(12, tableOutput("net_income"))
            )
   )
 )
@@ -100,22 +95,12 @@ server <- function(input, output) {
     
     data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                             input$kenp_royalty_per_page_read)
-    removeNotification("loading")
-
-  })
-  
-  observeEvent(input$load_bank, {
 
     data_output$raw_bank_data <- load_statements(input$bank_data_path)
 
     showNotification("Processing data...", id= "loading", duration = NULL)
 
     data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
-    removeNotification("loading")
-
-  })
-
-  observeEvent(input$load, {
 
     data_output$raw_data <- fread(file.path(input$ams_data_path, "ams.csv"))
 
@@ -248,14 +233,17 @@ server <- function(input, output) {
     }
   })
   
-  # observe({
-  #   if(!is.null(data_output$combined_data)){
-  #     data_output$net_income <-
-  #       aggregate_data_to_monthly(data_output$combined_data[Date >= "2022-10-01",],
-  #                                 data_output$bank_data,
-  #                                 data_output$ams_data)
-  #   }
-  # })
+  observe({
+    if(!is.null(data_output$combined_data) &
+       !is.null(data_output$bank_data) &
+       !is.null(data_output$ams_data)){
+      data_output$net_income <-
+        aggregate_data_to_monthly(data_output$combined_data[Date >= "2022-10-01",],
+                                  data_output$bank_data,
+                                  data_output$ams_data)
+      output$net_income <- renderTable({data_output$net_income})
+    }
+  })
   
   # Create the charts for different books
   output$chart_all_books_all_countries <- renderPlotly({
