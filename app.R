@@ -9,6 +9,7 @@ ui <- navbarPage(
            textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Sales Data/KDP"),
            textInput("bank_data_path", label = "Path to read data files from", value = "./private/bank"),
            textInput("ams_data_path", label = "Path to read data files from", value = "./private/ams"),
+           textInput("facebook_data_path", label = "Path to read data files from", value = "./private/facebook"),
            actionButton("load", "Load All Data"),
            br()
            ),
@@ -75,9 +76,21 @@ ui <- navbarPage(
   tabPanel("Net Income",
            fluidRow(
            ),
-           h2("Table"),
+           h2("Total"),
            fluidRow(
-             column(12, tableOutput("net_income"))
+             column(12, tableOutput("net_income_total"))
+           ),
+           h2("USA"),
+           fluidRow(
+             column(12, tableOutput("net_income_usa"))
+           ),
+           h2("UK"),
+           fluidRow(
+             column(12, tableOutput("net_income_uk"))
+           ),
+           h2("Aus"),
+           fluidRow(
+             column(12, tableOutput("net_income_aus"))
            )
   )
 )
@@ -89,6 +102,7 @@ server <- function(input, output) {
   # When the load data button is pressed, read in the KDP data excel files
   observeEvent(input$load, {
     
+    # KDP data
     data_output$raw_data <- load_kdp_files(input$data_path)
     
     showNotification("Processing data...", id= "loading", duration = NULL)
@@ -96,13 +110,15 @@ server <- function(input, output) {
     data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                             input$kenp_royalty_per_page_read)
 
+    # Bank statements
     data_output$raw_bank_data <- load_statements(input$bank_data_path)
 
     showNotification("Processing data...", id= "loading", duration = NULL)
 
     data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
 
-    data_output$raw_data <- fread(file.path(input$ams_data_path, "ams.csv"))
+    # AMS data
+    data_output$ams_data <- fread(file.path(input$ams_data_path, "ams.csv"))
 
     showNotification("Processing data...", id= "loading", duration = NULL)
 
@@ -110,15 +126,21 @@ server <- function(input, output) {
     # Merge exchange rates onto table
     ams_data <-
       merge(
-        data_output$raw_data,
+        data_output$ams_data,
         currency_lookup,
         by = "Currency"
       )
 
     # Compute GBP cost
-    ams_data[, ":=" (AMS_Ads = AMS / XR)]
+    ams_data[, ":=" (AMS_Ads = AMS / XR,
+                     Marketplace = "Amazon.com")]
     data_output$ams_data <- ams_data
 
+    # Facebook ad data
+    data_output$raw_facebook_data <- load_facebook(input$facebook_data_path)
+    data_output$facebook_data <- process_facebook_data(data_output$raw_facebook_data,
+                                                       fread("./data/country_lookup.csv"))
+    
     removeNotification("loading")
 
   })
@@ -233,15 +255,21 @@ server <- function(input, output) {
     }
   })
   
+  # Merge all datasets to produce net income figures
   observe({
     if(!is.null(data_output$combined_data) &
        !is.null(data_output$bank_data) &
        !is.null(data_output$ams_data)){
+      # Overall
       data_output$net_income <-
         aggregate_data_to_monthly(data_output$combined_data[Date >= "2022-10-01",],
                                   data_output$bank_data,
-                                  data_output$ams_data)
-      output$net_income <- renderTable({data_output$net_income})
+                                  data_output$ams_data,
+                                  data_output$facebook_data)
+      output$net_income_total <- renderTable({data_output$net_income[Marketplace == "Total", -c("Marketplace"), with = FALSE]})
+      output$net_income_usa <- renderTable({data_output$net_income[Marketplace == "Amazon.com", -c("Marketplace"), with = FALSE]})
+      output$net_income_uk <- renderTable({data_output$net_income[Marketplace == "Amazon.co.uk", -c("Marketplace"), with = FALSE]})
+      output$net_income_aus <- renderTable({data_output$net_income[Marketplace == "Amazon.com.au", -c("Marketplace"), with = FALSE]})
     }
   })
   
