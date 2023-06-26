@@ -268,23 +268,23 @@ server <- function(input, output) {
                                           align = "r")
       output$net_income_aus <- renderTable({data_output$net_income[Marketplace == "Amazon.com.au", -c("Marketplace"), with = FALSE]},
                                            align = "r")
-      # # Create cash accounting numbers from bank data
-      # output$net_cash_income <- renderTable(
-      #   data_output$bank_data[, .(Income = sum(Amount[Category == "Income"]),
-      #                             Facebook_Ads = sum(Amount[Category == "Facebook Ads"]),
-      #                             AMS_Ads = sum(Amount[Category == "AMS Ads"]),
-      #                             Other_Ad_Costs = sum(Amount[Category == "Other Ad Costs"]),
-      #                             Other_Expenses = sum(Amount[Category == "Other expenses"]),
-      #                             Net_income = sum(Amount)),
-      #                         keyby = c("Year", "Month")] %>%
-      #     format_output_table(),
-      #   align = "r"
-      # )
-      # output$net_cash_all <- renderTable({
-      #   data_output$bank_data[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
-      #   },
-      #   align = "r"
-      # )
+      # Create cash accounting numbers from bank data
+      output$net_cash_income <- renderTable(
+        data_output$bank_data[, .(Income = sum(Amount[Category == "Income"]),
+                                  Facebook_Ads = sum(Amount[Category == "Facebook Ads"]),
+                                  AMS_Ads = sum(Amount[Category == "AMS Ads"]),
+                                  Other_Ad_Costs = sum(Amount[Category == "Other Ad Costs"]),
+                                  Other_Expenses = sum(Amount[Category == "Other expenses"]),
+                                  Net_income = sum(Amount)),
+                              keyby = c("Year", "Month")] %>%
+          format_output_table(),
+        align = "r"
+      )
+      output$net_cash_all <- renderTable({
+        data_output$bank_data[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
+        },
+        align = "r"
+      )
     }
   })
   

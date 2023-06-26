@@ -58,6 +58,12 @@ aggregate_data_to_monthly <- function(processed_royalty_data,
   # Replace an NA with 0
   merged_monthly_data[is.na(merged_monthly_data)] <- 0
   
+  # Compute final net income
+  merged_monthly_data[, ":=" (Total_Ad_Spend = Facebook_Ads + AMS_Ads + Other_Ad_Costs,
+                              Net_income = KDP_Income + AMS_Ads + Facebook_Ads + Other_Ad_Costs + Other_Expenses,
+                              Net_regular_income = KDP_Income + Facebook_Ads + AMS_Ads + Other_Ad_Costs)
+  ][order(Marketplace, Year, Month),]
+  
   return(format_output_table(merged_monthly_data))
   
 }
