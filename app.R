@@ -92,6 +92,18 @@ ui <- navbarPage(
            fluidRow(
              column(12, tableOutput("net_income_aus"))
            )
+  ),
+  tabPanel("Cash Accounting",
+           fluidRow(
+           ),
+           h2("Total"),
+           fluidRow(
+             column(12, tableOutput("net_cash_income"))
+           ),
+           h2("Itemised"),
+           fluidRow(
+             column(12, tableOutput("net_cash_all"))
+           )
   )
 )
 
@@ -248,10 +260,31 @@ server <- function(input, output) {
                                   data_output$bank_data,
                                   data_output$ams_data,
                                   data_output$facebook_data)
-      output$net_income_total <- renderTable({data_output$net_income[Marketplace == "Total", -c("Marketplace"), with = FALSE]})
-      output$net_income_usa <- renderTable({data_output$net_income[Marketplace == "Amazon.com", -c("Marketplace"), with = FALSE]})
-      output$net_income_uk <- renderTable({data_output$net_income[Marketplace == "Amazon.co.uk", -c("Marketplace"), with = FALSE]})
-      output$net_income_aus <- renderTable({data_output$net_income[Marketplace == "Amazon.com.au", -c("Marketplace"), with = FALSE]})
+      output$net_income_total <- renderTable({data_output$net_income[Marketplace == "Total", -c("Marketplace"), with = FALSE]},
+                                             align = "r")
+      output$net_income_usa <- renderTable({data_output$net_income[Marketplace == "Amazon.com", -c("Marketplace"), with = FALSE]},
+                                           align = "r")
+      output$net_income_uk <- renderTable({data_output$net_income[Marketplace == "Amazon.co.uk", -c("Marketplace"), with = FALSE]},
+                                          align = "r")
+      output$net_income_aus <- renderTable({data_output$net_income[Marketplace == "Amazon.com.au", -c("Marketplace"), with = FALSE]},
+                                           align = "r")
+      # # Create cash accounting numbers from bank data
+      # output$net_cash_income <- renderTable(
+      #   data_output$bank_data[, .(Income = sum(Amount[Category == "Income"]),
+      #                             Facebook_Ads = sum(Amount[Category == "Facebook Ads"]),
+      #                             AMS_Ads = sum(Amount[Category == "AMS Ads"]),
+      #                             Other_Ad_Costs = sum(Amount[Category == "Other Ad Costs"]),
+      #                             Other_Expenses = sum(Amount[Category == "Other expenses"]),
+      #                             Net_income = sum(Amount)),
+      #                         keyby = c("Year", "Month")] %>%
+      #     format_output_table(),
+      #   align = "r"
+      # )
+      # output$net_cash_all <- renderTable({
+      #   data_output$bank_data[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
+      #   },
+      #   align = "r"
+      # )
     }
   })
   

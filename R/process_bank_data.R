@@ -12,7 +12,7 @@ process_bank_data <- function(dataset){
   dataset[, Date := as.Date(Date, format = "%d/%m/%Y")]
   
   # Filter after the date started using account for business
-  dataset <- dataset[Date > "2022-07-01"]
+  dataset <- dataset[Date > "2022-04-06"]
   dataset[, ":=" (Day = as.numeric(format(Date, "%d")),
                   Month = month(Date),
                   Year = year(Date))]
@@ -29,13 +29,13 @@ process_bank_data <- function(dataset){
                        !(`Spending Category` %in% c("HOLIDAYS", "EATING_OUT", "ENTERTAINMENT")),]
   
 
-  # Reclassify any income that is paid in the first few days of the month as belonging to the previous month
-  dataset[Amount > 0 & Day <= 6, Month := Month - 1]
-  # Amazon pays two months in arrears so change the month
-  dataset[Amount > 0, Month := Month - 2]
-  dataset[Month == 0, ":=" (Month = 12, Year = Year - 1)]
-  dataset[Month == -1, ":=" (Month = 11, Year = Year - 1)]
-  dataset[Month == -2, ":=" (Month = 10, Year = Year - 1)]
+  # # Reclassify any income that is paid in the first few days of the month as belonging to the previous month
+  # dataset[Amount > 0 & Day <= 6, Month := Month - 1]
+  # # Amazon pays two months in arrears so change the month
+  # dataset[Amount > 0, Month := Month - 2]
+  # dataset[Month == 0, ":=" (Month = 12, Year = Year - 1)]
+  # dataset[Month == -1, ":=" (Month = 11, Year = Year - 1)]
+  # dataset[Month == -2, ":=" (Month = 10, Year = Year - 1)]
   
   # Classify spend and income
   dataset[, Category := "Other expenses"]
