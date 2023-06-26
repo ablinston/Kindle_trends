@@ -6,10 +6,10 @@ source("global.R")
 ui <- navbarPage(
   "KDP royalty analyser",
   tabPanel("Data",
-           textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Sales Data/KDP"),
-           textInput("bank_data_path", label = "Path to read data files from", value = "./private/bank"),
-           textInput("ams_data_path", label = "Path to read data files from", value = "./private/ams"),
-           textInput("facebook_data_path", label = "Path to read data files from", value = "./private/facebook"),
+           textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/KDP"),
+           textInput("bank_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Bank"),
+           textInput("ams_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/AMS"),
+           textInput("facebook_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Facebook"),
            actionButton("load", "Load All Data"),
            br()
            ),
@@ -112,29 +112,11 @@ server <- function(input, output) {
 
     # Bank statements
     data_output$raw_bank_data <- load_statements(input$bank_data_path)
-
-    showNotification("Processing data...", id= "loading", duration = NULL)
-
     data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
 
     # AMS data
-    data_output$ams_data <- fread(file.path(input$ams_data_path, "ams.csv"))
-
-    showNotification("Processing data...", id= "loading", duration = NULL)
-
-    currency_lookup <- get_currency_lookup(c("GBPUSD=X"))
-    # Merge exchange rates onto table
-    ams_data <-
-      merge(
-        data_output$ams_data,
-        currency_lookup,
-        by = "Currency"
-      )
-
-    # Compute GBP cost
-    ams_data[, ":=" (AMS_Ads = AMS / XR,
-                     Marketplace = "Amazon.com")]
-    data_output$ams_data <- ams_data
+    data_output$raw_ams_data <- load_ams(input$ams_data_path)
+    data_output$ams_data <- process_ams_data(data_output$raw_ams_data)
 
     # Facebook ad data
     data_output$raw_facebook_data <- load_facebook(input$facebook_data_path)
