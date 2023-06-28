@@ -12,13 +12,12 @@ process_bank_data <- function(dataset){
   dataset[, Date := as.Date(Date, format = "%d/%m/%Y")]
   
   # Filter after the date started using account for business
-  dataset <- dataset[Date > "2022-04-06"]
   dataset[, ":=" (Day = as.numeric(format(Date, "%d")),
                   Month = month(Date),
                   Year = year(Date))]
   
   setnames(dataset, "Amount (GBP)", "Amount")
-  
+
   # Filter out any interal transfers & PAYE
   dataset <- dataset[!(`Counter Party` %in% c("Andrew Blinston",
                                               "Liu Jingzhe",

@@ -95,8 +95,16 @@ ui <- navbarPage(
   ),
   tabPanel("Cash Accounting",
            fluidRow(
+             column(6, dateInput("cash_accounting_start", "Start date", value = "2022-04-06")),
+             column(6, dateInput("cash_accounting_end", "End date", value = Sys.Date()))
+           ),
+           fluidRow(
            ),
            h2("Total"),
+           fluidRow(
+             column(12, tableOutput("net_cash_income_total"))
+           ),
+           h2("Monthly"),
            fluidRow(
              column(12, tableOutput("net_cash_income"))
            ),
@@ -249,6 +257,49 @@ server <- function(input, output) {
     }
   })
   
+  # Filter the bank data for the cash accounting tab
+  observe({
+    if (!is.null(input$cash_accounting_start) & 
+        !is.null(input$cash_accounting_end) &
+        !is.null(data_output$bank_data)) {
+      
+      data_output$bank_data_filtered <- data_output$bank_data[Date >= input$cash_accounting_start &
+                                                                Date <= input$cash_accounting_end,][order(Date),]
+      # Create cash accounting numbers from bank data
+      output$net_cash_income <- renderTable(
+        data_output$bank_data_filtered[, .(
+          Gross_Income = sum(Amount[Category == "Income"]),
+          Facebook_Ads = sum(Amount[Category == "Facebook Ads"]),
+          AMS_Ads = sum(Amount[Category == "AMS Ads"]),
+          Other_Ad_Costs = sum(Amount[Category == "Other Ad Costs"]),
+          Other_Expenses = sum(Amount[Category == "Other expenses"]),
+          Net_income = sum(Amount)
+        ),
+        keyby = c("Year", "Month")] %>%
+          format_output_table(), 
+        align = "r"
+      )
+      output$net_cash_income_total <- renderTable(
+        data_output$bank_data_filtered[, .(
+          Gross_Income = sum(Amount[Category == "Income"]),
+          Facebook_Ads = sum(Amount[Category == "Facebook Ads"]),
+          AMS_Ads = sum(Amount[Category == "AMS Ads"]),
+          Other_Ad_Costs = sum(Amount[Category == "Other Ad Costs"]),
+          Other_Expenses = sum(Amount[Category == "Other expenses"]),
+          Net_income = sum(Amount)
+        ),
+        keyby = ""] %>%
+          format_output_table(), 
+        align = "r"
+      )
+      output$net_cash_all <- renderTable({
+        data_output$bank_data_filtered[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
+      },
+      align = "r"
+      )
+    }
+  })
+  
   # Merge all datasets to produce net income figures
   observe({
     if(!is.null(data_output$combined_data) &
@@ -268,23 +319,6 @@ server <- function(input, output) {
                                           align = "r")
       output$net_income_aus <- renderTable({data_output$net_income[Marketplace == "Amazon.com.au", -c("Marketplace"), with = FALSE]},
                                            align = "r")
-      # Create cash accounting numbers from bank data
-      output$net_cash_income <- renderTable(
-        data_output$bank_data[, .(Income = sum(Amount[Category == "Income"]),
-                                  Facebook_Ads = sum(Amount[Category == "Facebook Ads"]),
-                                  AMS_Ads = sum(Amount[Category == "AMS Ads"]),
-                                  Other_Ad_Costs = sum(Amount[Category == "Other Ad Costs"]),
-                                  Other_Expenses = sum(Amount[Category == "Other expenses"]),
-                                  Net_income = sum(Amount)),
-                              keyby = c("Year", "Month")] %>%
-          format_output_table(),
-        align = "r"
-      )
-      output$net_cash_all <- renderTable({
-        data_output$bank_data[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
-        },
-        align = "r"
-      )
     }
   })
   

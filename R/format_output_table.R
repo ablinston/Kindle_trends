@@ -7,8 +7,11 @@ format_output_table <- function(dataset){
       dataset[, (cols) := formatC(get(cols), digits = 2, format = "f", big.mark = ",")]
     }
   }
-  dataset[ , ":=" (Year = as.integer(Year),
-                   Month = as.integer(Month))]
+  
+  if (!is.null(dataset$Year)){
+    dataset[, ":=" (Year = as.integer(Year),
+                    Month = as.integer(Month))]
+  }
   
   return(dataset)
   
