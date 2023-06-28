@@ -18,3 +18,5 @@ for (filename in list.files("R")) {
 
 series_info <- fread("data/series.csv")
 
+# Initial categories for dropdown in cash accounting tab
+cash_accounting_itemised_categories <- c("All")

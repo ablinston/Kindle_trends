@@ -110,6 +110,9 @@ ui <- navbarPage(
            ),
            h2("Itemised"),
            fluidRow(
+             column(6, uiOutput("bank_data_categories"))
+           ),
+           fluidRow(
              column(12, tableOutput("net_cash_all"))
            )
   )
@@ -142,6 +145,14 @@ server <- function(input, output) {
     data_output$raw_facebook_data <- load_facebook(input$facebook_data_path)
     data_output$facebook_data <- process_facebook_data(data_output$raw_facebook_data,
                                                        fread("./data/country_lookup.csv"))
+    
+    # Add data to any inputs needed
+    output$bank_data_categories <- renderUI({
+      selectInput("cash_accounting_categories",
+                  "Select categories", 
+                  choices = c("All", unique(data_output$bank_data$Category)),
+                  selected = "All")
+    })
     
     removeNotification("loading")
 
@@ -261,7 +272,8 @@ server <- function(input, output) {
   observe({
     if (!is.null(input$cash_accounting_start) & 
         !is.null(input$cash_accounting_end) &
-        !is.null(data_output$bank_data)) {
+        !is.null(data_output$bank_data) &
+        !is.null(input$cash_accounting_categories)) {
       
       data_output$bank_data_filtered <- data_output$bank_data[Date >= input$cash_accounting_start &
                                                                 Date <= input$cash_accounting_end,][order(Date),]
@@ -292,11 +304,20 @@ server <- function(input, output) {
           format_output_table(), 
         align = "r"
       )
-      output$net_cash_all <- renderTable({
-        data_output$bank_data_filtered[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
-      },
-      align = "r"
-      )
+      browser
+      if (input$cash_accounting_categories == "All"){
+        output$net_cash_all <- renderTable({
+          data_output$bank_data_filtered[, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
+        },
+        align = "r"
+        )
+      } else {
+        output$net_cash_all <- renderTable({
+          data_output$bank_data_filtered[Category == input$cash_accounting_categories][, .(Date, `Counter Party`, Reference, Category, Amount)][, Date := as.character(Date)]
+        },
+        align = "r"
+        )
+      }
     }
   })
   
