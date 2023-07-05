@@ -3,7 +3,7 @@
 process_ams_data <- function(dataset, country_lookup) {
 
   # # For debugging
-  dataset <- load_ams("F:/Writing - Book/Data/AMS")
+  # dataset <- load_ams("F:/Writing - Book/Data/AMS")
 
   # Remove any duplicate rows that have been included by mistake and remove free giveaways
   data_no_duplicates <-
@@ -22,15 +22,24 @@ process_ams_data <- function(dataset, country_lookup) {
                               all.x = TRUE)
   
   # Format spend and convert to GBP
-  data_no_duplicates[, AMS_Ads := -as.numeric(gsub("\\$", "", Spend)) / XR]
+  data_no_duplicates[, AMS_Ads := -as.numeric(gsub("\\$", "", gsub("£", "", Spend))) / XR]
   
   # Sort by date
   setorder(data_no_duplicates, Date)
+  
+  # Compute marketplace
+  data_no_duplicates[, Marketplace := fcase(Currency == "USD", "Amazon.com", 
+                                            Currency == "GBP", "Amazon.co.uk", 
+                                            default = "Unknown")]
+  
+  # Check there are no unknown marketplaces
+  if (nrow(data_no_duplicates[Marketplace == "Uknown",]) > 0){
+    stop("AMS ads data has unknown currencies")
+  }
 
   # Get daily spend
-  daily_data <- data_no_duplicates[, .(Marketplace = "Amazon.com",
-                                       AMS_Ads = sum(AMS_Ads, na.rm = TRUE)),
-                                   keyby = "Date"]
+  daily_data <- data_no_duplicates[, .(AMS_Ads = sum(AMS_Ads, na.rm = TRUE)),
+                                   keyby = c("Date", "Marketplace")]
 
   # Get monthly spend per marketplace
   daily_data[, ":=" (Year = year(Date), Month = month(Date))]

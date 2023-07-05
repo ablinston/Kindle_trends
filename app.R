@@ -15,8 +15,8 @@ ui <- navbarPage(
            ),
   tabPanel("Royalties",
            fluidRow(
-             column(4, numericInput("historic_days", "Days of history to view", value = 120)),
-             column(4, numericInput("ma_days", "Days to take moving average across", value = 7)),
+             column(4, sliderInput("historic_days", "Days of history to view", min = 7, max = 500, value = 120)),
+             column(4, sliderInput("ma_days", "Days to take moving average across", min = 1, max = 28, value = 7)),
              column(4, numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.004561577))
            ),
            h2("Charts"),
@@ -369,7 +369,7 @@ server <- function(input, output) {
   output$chart_all_books_all_countries <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, All countries")
     }
   })
@@ -385,7 +385,7 @@ server <- function(input, output) {
   output$chart_all_books_USA <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, USA")
     }
   })
@@ -401,7 +401,7 @@ server <- function(input, output) {
   output$chart_all_books_UK <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, UK")
     }
   })
@@ -417,7 +417,7 @@ server <- function(input, output) {
   output$chart_all_books_Aus <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, Australia")
     }
   })
@@ -433,7 +433,7 @@ server <- function(input, output) {
   output$chart_all_books_Can <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, Canada")
     }
   })
@@ -449,7 +449,7 @@ server <- function(input, output) {
   output$chart_all_books_ROW <- renderPlotly({
     if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')),] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, Rest of world")
     }
   })

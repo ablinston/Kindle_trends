@@ -21,7 +21,7 @@ moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FA
   if (include_net == TRUE) {
     
     # Convert the data to long format for grouping in chart
-    columns_to_include <- c("Gross_Royalty_ma", "AMS_Ads_ma", "Facebook_Ads_ma", "Net_Royalties_ma")
+    columns_to_include <- c("Gross_Royalty_ma", "AMS_Ads", "Facebook_Ads", "Net_Royalties_ma")
     
     aggregated_royalties_long <- 
       aggregated_royalties %>%
@@ -31,10 +31,18 @@ moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FA
                    values_to = "GBP_Amount")
       
     # Plot the moving average as a chart
-    chart <- ggplot(aggregated_royalties_long,
-                    aes(x = Date, y = GBP_Amount, group = Measure, color = Measure)) +
-      geom_line() +
+    
+    chart <- ggplot() +
+      geom_line(data = aggregated_royalties_long %>% filter(Measure %in% c("Gross_Royalty_ma", "Net_Royalties_ma")),
+                aes(x = Date, y = GBP_Amount, group = Measure, color = Measure)) +
+      geom_bar(data = aggregated_royalties_long %>% filter(Measure %in% c("AMS_Ads", "Facebook_Ads")),
+               aes(x = Date, y = GBP_Amount, fill = Measure, color = Measure), stat = "identity") +
       ylim(min(c(aggregated_royalties$Facebook_Ads, aggregated_royalties$AMS_Ads)), max(aggregated_royalties$Gross_Royalty_ma))
+
+    # chart <- ggplot(aggregated_royalties_long,
+    #                 aes(x = Date, y = GBP_Amount, group = Measure, color = Measure)) +
+    #   geom_line() +
+    #   ylim(min(c(aggregated_royalties$Facebook_Ads, aggregated_royalties$AMS_Ads)), max(aggregated_royalties$Gross_Royalty_ma))
     
   } else {
     
