@@ -139,12 +139,18 @@ server <- function(input, output) {
 
     # AMS data
     data_output$raw_ams_data <- load_ams(input$ams_data_path)
-    data_output$ams_data <- process_ams_data(data_output$raw_ams_data)
+    ams_data <- process_ams_data(data_output$raw_ams_data)
+    data_output$ams_data <- ams_data$ams_data
+    data_output$daily_ams_data <- ams_data$daily_ams_data
+    rm(ams_data)
 
     # Facebook ad data
     data_output$raw_facebook_data <- load_facebook(input$facebook_data_path)
-    data_output$facebook_data <- process_facebook_data(data_output$raw_facebook_data,
-                                                       fread("./data/country_lookup.csv"))
+    facebook_data <- process_facebook_data(data_output$raw_facebook_data,
+                                           fread("./data/country_lookup.csv"))
+    data_output$facebook_data <- facebook_data$facebook_data
+    data_output$daily_facebook_data <- facebook_data$daily_facebook_data
+    rm(facebook_data)
     
     # Add data to any inputs needed
     output$bank_data_categories <- renderUI({
@@ -154,6 +160,19 @@ server <- function(input, output) {
                   selected = "All")
     })
     
+    # Merge the spend data to royalty data
+    data_output$combined_data <- 
+      data_output$combined_data %>%
+      merge(data_output$daily_facebook_data,
+            by = c("Date", "Marketplace"),
+            all.x = TRUE) %>%
+      merge(
+        data_output$daily_ams_data %>%
+          select(Date, Marketplace, AMS_Ads),
+        by = c("Date", "Marketplace"),
+        all.x = TRUE
+      )
+
     removeNotification("loading")
 
   })

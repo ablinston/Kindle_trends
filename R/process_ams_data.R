@@ -3,12 +3,12 @@
 process_ams_data <- function(dataset, country_lookup) {
 
   # # For debugging
-  # dataset <- load_ams("F:/Writing - Book/Data/AMS")
+  dataset <- load_ams("F:/Writing - Book/Data/AMS")
 
   # Remove any duplicate rows that have been included by mistake and remove free giveaways
   data_no_duplicates <-
     dataset %>%
-    unique(by = c("Date", "Campaign Type", "Campaign Name", "Currency"),
+    unique(by = c("Date", "Start Date", "Campaign Name", "Currency"),
            fromLast = TRUE)
   
   # Fix format of date
@@ -38,6 +38,8 @@ process_ams_data <- function(dataset, country_lookup) {
   aggregated_data <- daily_data[, .(AMS_Ads = sum(AMS_Ads)),
                                 keyby = c("Year", "Month", "Marketplace")]
   
-  return(aggregated_data)
+  list(daily_ams_data = daily_data,
+       ams_data = aggregated_data) %>%
+    return()
   
 }

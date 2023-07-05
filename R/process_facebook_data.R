@@ -24,9 +24,13 @@ process_facebook_data <- function(dataset, country_lookup) {
   # Get monthly spend per marketplace
   data_no_duplicates[, ":=" (Year = year(Date), Month = month(Date))]
   
+  daily_data <- data_no_duplicates[, .(Facebook_Ads = -sum(`Amount spent (GBP)`)),
+                                   keyby = c("Date", "Marketplace")]
+  
   aggregated_data <- data_no_duplicates[, .(Facebook_Ads = -sum(`Amount spent (GBP)`)),
                                         keyby = c("Year", "Month", "Marketplace")]
   
-  return(aggregated_data)
+  return(list(daily_facebook_data = daily_data,
+              facebook_data = aggregated_data))
   
 }
