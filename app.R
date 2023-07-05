@@ -173,6 +173,9 @@ server <- function(input, output) {
         all.x = TRUE
       )
 
+    # Replace NA ad spend with 0
+    data_output$combined_data[is.na(data_output$combined_data)] <- 0
+    
     removeNotification("loading")
 
   })
