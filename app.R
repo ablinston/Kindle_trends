@@ -15,7 +15,7 @@ ui <- navbarPage(
            ),
   tabPanel("Royalties",
            fluidRow(
-             column(4, sliderInput("historic_days", "Days of history to view", min = 7, max = 500, value = 120)),
+             column(4, sliderInput("historic_months", "Months of history to view", min = 1, max = 50, value = 4)),
              column(4, sliderInput("ma_days", "Days to take moving average across", min = 1, max = 28, value = 7)),
              column(4, numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.004561577))
            ),
@@ -183,9 +183,9 @@ server <- function(input, output) {
   # Filter the data ready for the charts
   observe({
     # Check whether the royalty data exists
-    if(input$historic_days > 0 & !is.null(data_output$combined_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$combined_data)) {
       data_output$filtered_data <-
-        data_output$combined_data[Date >= (max(Date) - input$historic_days),]
+        data_output$combined_data[Date >= (max(Date) - (input$historic_months) * 30),]
 
       data_output$wide_all_markets <-
         data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
@@ -367,7 +367,7 @@ server <- function(input, output) {
   
   # Create the charts for different books
   output$chart_all_books_all_countries <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, All countries")
@@ -375,7 +375,7 @@ server <- function(input, output) {
   })
   
   output$chart_oblivion_all_countries <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) %>%
         layout(title = "Oblivion, All countries")
@@ -383,7 +383,7 @@ server <- function(input, output) {
   })
   
   output$chart_all_books_USA <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, USA")
@@ -391,7 +391,7 @@ server <- function(input, output) {
   })
   
   output$chart_oblivion_USA <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com' & ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) %>%
         layout(title = "Oblivion, USA")
@@ -399,7 +399,7 @@ server <- function(input, output) {
   })
   
   output$chart_all_books_UK <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, UK")
@@ -407,7 +407,7 @@ server <- function(input, output) {
   })
   
   output$chart_oblivion_UK <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk' & ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) %>%
         layout(title = "Oblivion, UK")
@@ -415,7 +415,7 @@ server <- function(input, output) {
   })
   
   output$chart_all_books_Aus <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, Australia")
@@ -423,7 +423,7 @@ server <- function(input, output) {
   })
   
   output$chart_oblivion_Aus <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au' & ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) %>%
         layout(title = "Oblivion, Australia")
@@ -431,7 +431,7 @@ server <- function(input, output) {
   })
   
   output$chart_all_books_Can <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, Canada")
@@ -439,7 +439,7 @@ server <- function(input, output) {
   })
   
   output$chart_oblivion_Can <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca' & ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) %>%
         layout(title = "Oblivion, Canada")
@@ -447,7 +447,7 @@ server <- function(input, output) {
   })
   
   output$chart_all_books_ROW <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')),] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
         layout(title = "All books, Rest of world")
@@ -455,7 +455,7 @@ server <- function(input, output) {
   })
   
   output$chart_oblivion_ROW <- renderPlotly({
-    if(input$historic_days > 0 & !is.null(data_output$filtered_data)) {
+    if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')) & ASIN == 'B087676DTB',] %>%
         moving_average_royalty_chart(input$ma_days) %>%
         layout(title = "Oblivion, Rest of world")
