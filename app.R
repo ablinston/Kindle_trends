@@ -156,7 +156,7 @@ server <- function(input, output) {
     output$bank_data_categories <- renderUI({
       selectInput("cash_accounting_categories",
                   "Select categories", 
-                  choices = c("All", unique(data_output$bank_data$Category)),
+                  choices = c("All", distinct(data_output$bank_data$Category)),
                   selected = "All")
     })
     

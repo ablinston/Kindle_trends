@@ -799,14 +799,9 @@
     },
     "quantmod": {
       "Package": "quantmod",
-      "Version": "0.4.22.1",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteUsername": "ethanbsmith",
-      "RemoteRepo": "quantmod",
-      "RemoteRef": "382_add_session_getQuote",
-      "RemoteSha": "554af1b9f35bff83afb700f1f98281be785e56d3",
-      "RemoteHost": "api.github.com",
+      "Version": "0.4.23",
+      "Source": "Repository",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "TTR",
@@ -816,7 +811,7 @@
         "xts",
         "zoo"
       ],
-      "Hash": "48b9b5fdae8c40c8f6b42049cb1ad1f6"
+      "Hash": "4e22df5a2501e5f538a380c14ea852a4"
     },
     "rappdirs": {
       "Package": "rappdirs",
