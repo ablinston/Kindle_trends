@@ -14,7 +14,7 @@ get_currency_lookup <- function(currencies){ # example c("GBPGBP=X", GBPUSD=X")
       getQuote(currencies)
     
     currency_lookup <- 
-      data.table(Currency = currencies,
+      data.table(Currency = str_sub(currencies, 4, 6),
                  XR = currency_conversions$Open)
     
     # Save in case of error next time

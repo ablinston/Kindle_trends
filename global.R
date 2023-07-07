@@ -10,6 +10,7 @@ library(shiny)
 library(tidyr)
 library(plotly)
 library(lubridate)
+library(stringr)
 
 # Load all functions
 for (filename in list.files("R")) {
