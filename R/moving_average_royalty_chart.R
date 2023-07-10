@@ -26,7 +26,7 @@ moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FA
     aggregated_royalties_long <- 
       aggregated_royalties %>%
       select(all_of(c("Date", columns_to_include))) %>%
-      pivot_longer(cols = columns_to_include,
+      pivot_longer(cols = all_of(columns_to_include),
                    names_to = "Measure",
                    values_to = "GBP_Amount")
       

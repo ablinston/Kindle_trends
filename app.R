@@ -174,7 +174,10 @@ server <- function(input, output) {
       )
 
     # Replace NA ad spend with 0
-    data_output$combined_data[is.na(data_output$combined_data)] <- 0
+    data_output$combined_data$Facebook_Ads[is.na(data_output$combined_data$Facebook_Ads) &
+                                             data_output$combined_data$Date <= max(data_output$daily_facebook_data$Date)] <- 0
+    data_output$combined_data$AMS_Ads[is.na(data_output$combined_data$AMS_Ads) &
+                                             data_output$combined_data$Date <= max(data_output$daily_ams_data$Date)] <- 0
     
     removeNotification("loading")
 

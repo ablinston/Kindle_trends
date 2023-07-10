@@ -15,14 +15,14 @@ process_ams_data <- function(dataset, country_lookup) {
   data_no_duplicates[, Date:= gsub(",", "", Date)][, Date:= gsub(" ", "-", Date)][, Date := as.Date(Date, "%b-%d-%Y")]
   
   # Get exchange rates
-  currency_lookup <- get_currency_lookup(c("GBPUSD=X"))
+  currency_lookup <- get_currency_lookup(paste0("GBP", unique(data_no_duplicates$Currency), "=X"))
   data_no_duplicates <- merge(data_no_duplicates, 
                               currency_lookup, 
                               by = "Currency", 
                               all.x = TRUE)
   
   # Format spend and convert to GBP
-  data_no_duplicates[, AMS_Ads := -as.numeric(gsub("\\$", "", gsub("£", "", Spend))) / XR]
+  data_no_duplicates[, AMS_Ads := -as.numeric(gsub("[£$]", "", Spend, perl = TRUE)) / XR]
   
   # Sort by date
   setorder(data_no_duplicates, Date)
