@@ -82,23 +82,25 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
     )
 
   # Compute GBP sales
-  sales_data_all_days[, ":=" (GBP_royalty = Royalty / XR)]
+  sales_data_all_days[, ":=" (GBP_royalty_sales = Royalty / XR)]
   setnames(sales_data_all_days, c("ASIN/ISBN", "Net Units Sold"), c("ASIN", "orders"))
   
   # Compute GBP KENP
-  kenp_data_all_days[, GBP_royalty := kenp * kenp_royalty_per_page_read / currency_lookup$XR[currency_lookup$Currency == "USD"]]
+  kenp_data_all_days[, GBP_royalty_ku := kenp * kenp_royalty_per_page_read / currency_lookup$XR[currency_lookup$Currency == "USD"]]
   
   # Sum all royalties for each date
-  all_data <- rbindlist(list(sales_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty, orders)],
-                             kenp_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty, kenp)]),
+  all_data <- rbindlist(list(sales_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty_sales, orders)],
+                             kenp_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty_ku, kenp)]),
                         fill = TRUE)
 
   # Aggregate the data to include one entry per day
   all_data <- 
-    all_data[, .(GBP_royalty = sum(GBP_royalty, na.rm = TRUE),
+    all_data[, .(GBP_royalty_sales = sum(GBP_royalty_sales, na.rm = TRUE),
+                 GBP_royalty_ku = sum(GBP_royalty_ku, na.rm = TRUE),
                  orders = sum(orders, na.rm = TRUE),
                  kenp = sum(kenp, na.rm = TRUE)),
-             by = c("Date", "ASIN", "Marketplace")]
+             by = c("Date", "ASIN", "Marketplace")
+             ][, GBP_royalty := GBP_royalty_ku + GBP_royalty_sales]
   
   setorderv(all_data, cols = c("Marketplace", "Date"))
   

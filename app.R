@@ -179,8 +179,11 @@ server <- function(input, output) {
     data_output$combined_data$AMS_Ads[is.na(data_output$combined_data$AMS_Ads) &
                                              data_output$combined_data$Date <= max(data_output$daily_ams_data$Date)] <- 0
     
-    # Calculate the sales to kenp ratio
-    # browser()
+    # Calculate the ku sales as a propotion of full book reads
+    data_output$combined_data <- merge(data_output$combined_data, series_info[, .(ASIN, kenp_length)], by = "ASIN")
+    data_output$combined_data[, ku_sales := kenp / kenp_length
+                                ][, kenp_length := NULL]
+    
     removeNotification("loading")
 
   })
@@ -384,7 +387,7 @@ server <- function(input, output) {
   output$chart_oblivion_all_countries <- renderPlotly({
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, ku_prop = TRUE) %>%
         layout(title = "Oblivion, All countries")
     }
   })
@@ -400,7 +403,7 @@ server <- function(input, output) {
   output$chart_oblivion_USA <- renderPlotly({
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, ku_prop = TRUE) %>%
         layout(title = "Oblivion, USA")
     }
   })
@@ -416,7 +419,7 @@ server <- function(input, output) {
   output$chart_oblivion_UK <- renderPlotly({
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, ku_prop = TRUE) %>%
         layout(title = "Oblivion, UK")
     }
   })
@@ -432,7 +435,7 @@ server <- function(input, output) {
   output$chart_oblivion_Aus <- renderPlotly({
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, ku_prop = TRUE) %>%
         layout(title = "Oblivion, Australia")
     }
   })
@@ -448,7 +451,7 @@ server <- function(input, output) {
   output$chart_oblivion_Can <- renderPlotly({
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca' & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, ku_prop = TRUE) %>%
         layout(title = "Oblivion, Canada")
     }
   })
@@ -464,7 +467,7 @@ server <- function(input, output) {
   output$chart_oblivion_ROW <- renderPlotly({
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')) & ASIN == 'B087676DTB',] %>%
-        moving_average_royalty_chart(input$ma_days) %>%
+        moving_average_royalty_chart(input$ma_days, ku_prop = TRUE) %>%
         layout(title = "Oblivion, Rest of world")
     }
   })
