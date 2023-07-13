@@ -179,6 +179,8 @@ server <- function(input, output) {
     data_output$combined_data$AMS_Ads[is.na(data_output$combined_data$AMS_Ads) &
                                              data_output$combined_data$Date <= max(data_output$daily_ams_data$Date)] <- 0
     
+    # Calculate the sales to kenp ratio
+    # browser()
     removeNotification("loading")
 
   })
@@ -187,8 +189,10 @@ server <- function(input, output) {
   observe({
     # Check whether the royalty data exists
     if(input$historic_months > 0 & !is.null(data_output$combined_data)) {
+      # browser()
       data_output$filtered_data <-
-        data_output$combined_data[Date >= (max(Date) - (input$historic_months) * 30),]
+        data_output$combined_data[Date >= (max(Date) - (input$historic_months) * 30) &
+                                    ASIN %in% series_info$ASIN,]
 
       data_output$wide_all_markets <-
         data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
@@ -373,7 +377,7 @@ server <- function(input, output) {
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
-        layout(title = "All books, All countries")
+        layout(title = "All individual books, All countries")
     }
   })
   
@@ -389,7 +393,7 @@ server <- function(input, output) {
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
-        layout(title = "All books, USA")
+        layout(title = "All individual books, USA")
     }
   })
   
@@ -405,7 +409,7 @@ server <- function(input, output) {
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.co.uk',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
-        layout(title = "All books, UK")
+        layout(title = "All individual books, UK")
     }
   })
   
@@ -421,7 +425,7 @@ server <- function(input, output) {
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.com.au',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
-        layout(title = "All books, Australia")
+        layout(title = "All individual books, Australia")
     }
   })
   
@@ -437,7 +441,7 @@ server <- function(input, output) {
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[Marketplace == 'Amazon.ca',] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
-        layout(title = "All books, Canada")
+        layout(title = "All individual books, Canada")
     }
   })
   
@@ -453,7 +457,7 @@ server <- function(input, output) {
     if(input$historic_months > 0 & !is.null(data_output$filtered_data)) {
       data_output$filtered_data[!(Marketplace %in% c('Amazon.com', 'Amazon.co.uk', 'Amazon.ca', 'Amazon.com.au')),] %>%
         moving_average_royalty_chart(input$ma_days, include_net = TRUE) %>%
-        layout(title = "All books, Rest of world")
+        layout(title = "All individual books, Rest of world")
     }
   })
   
