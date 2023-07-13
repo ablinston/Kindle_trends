@@ -365,7 +365,7 @@ server <- function(input, output) {
        !is.null(data_output$ams_data)){
       # Overall
       data_output$net_income <-
-        aggregate_data_to_monthly(data_output$combined_data[Date >= "2020-07-01",],
+        aggregate_data_to_monthly(data_output$combined_data[Date >= "2022-06-01",],
                                   data_output$bank_data,
                                   data_output$ams_data,
                                   data_output$facebook_data)
