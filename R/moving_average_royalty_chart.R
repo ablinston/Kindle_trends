@@ -3,9 +3,9 @@
 moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FALSE, ku_prop = FALSE) {
 
   # Aggregate by date
-  # Ad spend is duplicated across ASINs and negative, so just take the min
+  # Facebook Ad spend is duplicated across ASINs and negative, so just take the min
   aggregated_royalties <- royalty_data[, .(Royalty = sum(GBP_royalty),
-                                           AMS_Ads = min(AMS_Ads),
+                                           AMS_Ads = sum(AMS_Ads),
                                            Facebook_Ads = min(Facebook_Ads),
                                            Sales_royalty = sum(GBP_royalty_sales),
                                            KU_royalty = sum(GBP_royalty_ku),
@@ -42,8 +42,11 @@ moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FA
     # Plot the moving average as a chart
     
     chart <- ggplot() +
-      geom_line(data = aggregated_royalties_long %>% filter(!(Measure %in% c("AMS_Ads", "Facebook_Ads"))),
+      geom_line(data = aggregated_royalties_long %>% filter(Measure %in% c("Gross_Royalty_ma", "Net_Royalties_ma")),
                 aes(x = Date, y = GBP_Amount, group = Measure, color = Measure)) +
+      geom_line(data = aggregated_royalties_long %>% filter(Measure %in% c("Sales_Royalty_ma", "KU_Royalty_ma")),
+                aes(x = Date, y = GBP_Amount, group = Measure, color = Measure),
+                linetype = "dashed") +
       geom_bar(data = aggregated_royalties_long %>% filter(Measure %in% c("AMS_Ads", "Facebook_Ads")),
                aes(x = Date, y = GBP_Amount, fill = Measure, color = Measure), stat = "identity") +
       ylim(min(c(aggregated_royalties$Facebook_Ads, aggregated_royalties$AMS_Ads)), max(aggregated_royalties$Gross_Royalty_ma))

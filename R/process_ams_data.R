@@ -5,14 +5,15 @@ process_ams_data <- function(dataset, country_lookup) {
   # # For debugging
   # dataset <- load_ams("F:/Writing - Book/Data/AMS")
 
+  # Calculate the ASIN for those missing (set to Oblivion)
+  setnames(dataset, "Advertised ASIN", "ASIN")
+  dataset[is.na(ASIN), ASIN := "B087676DTB"]
+  
   # Remove any duplicate rows that have been included by mistake and remove free giveaways
   data_no_duplicates <-
     dataset %>%
-    unique(by = c("Date", "Start Date", "Campaign Name", "Currency"),
+    unique(by = c("Date", "Start Date", "Campaign Name", "ASIN", "Currency"),
            fromLast = TRUE)
-  
-  # Fix format of date
-  data_no_duplicates[, Date:= gsub(",", "", Date)][, Date:= gsub(" ", "-", Date)][, Date := as.Date(Date, "%b-%d-%Y")]
   
   # Get exchange rates
   currency_lookup <- get_currency_lookup(paste0("GBP", unique(data_no_duplicates$Currency), "=X"))
@@ -39,7 +40,7 @@ process_ams_data <- function(dataset, country_lookup) {
 
   # Get daily spend
   daily_data <- data_no_duplicates[, .(AMS_Ads = sum(AMS_Ads, na.rm = TRUE)),
-                                   keyby = c("Date", "Marketplace")]
+                                   keyby = c("Date", "Marketplace", "ASIN")]
 
   # Get monthly spend per marketplace
   daily_data[, ":=" (Year = year(Date), Month = month(Date))]

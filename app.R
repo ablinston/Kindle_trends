@@ -24,22 +24,27 @@ ui <- navbarPage(
              column(6, plotlyOutput("chart_all_books_all_countries")),
              column(6, plotlyOutput("chart_oblivion_all_countries"))
            ),
+           fluidRow(br(), br()),
            fluidRow(
              column(6, plotlyOutput("chart_all_books_USA")),
              column(6, plotlyOutput("chart_oblivion_USA"))
            ),
+           fluidRow(br(), br()),
            fluidRow(
              column(6, plotlyOutput("chart_all_books_UK")),
              column(6, plotlyOutput("chart_oblivion_UK"))
            ),
+           fluidRow(br(), br()),
            fluidRow(
              column(6, plotlyOutput("chart_all_books_Aus")),
              column(6, plotlyOutput("chart_oblivion_Aus"))
            ),
+           fluidRow(br(), br()),
            fluidRow(
              column(6, plotlyOutput("chart_all_books_Can")),
              column(6, plotlyOutput("chart_oblivion_Can"))
            ),
+           fluidRow(br(), br()),
            fluidRow(
              column(6, plotlyOutput("chart_all_books_ROW")),
              column(6, plotlyOutput("chart_oblivion_ROW"))
@@ -168,8 +173,8 @@ server <- function(input, output) {
             all.x = TRUE) %>%
       merge(
         data_output$daily_ams_data %>%
-          select(Date, Marketplace, AMS_Ads),
-        by = c("Date", "Marketplace"),
+          select(Date, Marketplace, ASIN, AMS_Ads),
+        by = c("Date", "Marketplace", "ASIN"),
         all.x = TRUE
       )
 
@@ -360,7 +365,7 @@ server <- function(input, output) {
        !is.null(data_output$ams_data)){
       # Overall
       data_output$net_income <-
-        aggregate_data_to_monthly(data_output$combined_data[Date >= "2022-10-01",],
+        aggregate_data_to_monthly(data_output$combined_data[Date >= "2020-07-01",],
                                   data_output$bank_data,
                                   data_output$ams_data,
                                   data_output$facebook_data)

@@ -4,8 +4,8 @@
 load_ams <- function(data_location){
 
   # Read in data files
-  
-  files_list = list.files(data_location, pattern="*.csv")
+  files_list = c(list.files(data_location, pattern="*.csv"),
+                 list.files(data_location, pattern="*.xlsx"))
   
   # Load existing data file if it exists
   if (file.exists("private/saved_raw_ams.Rds")) {
@@ -27,13 +27,27 @@ load_ams <- function(data_location){
     
     # If it's not already in the data then we process the file, otherwise skip
     if (!(file %in% existing_data_filenames)) {
-      
-      # All sales
-      new_data <- 
-        fread(file.path(data_location, file))
-      
+
+      if (grepl("xlsx", file)){
+        new_data <- 
+          read_excel(file.path(data_location, file), sheet = 1) %>%
+          # convert date to character to allow rbind
+          mutate(Date = as.character(Date)) %>%
+          as.data.table
+      } else {
+        # All sales
+        new_data <- 
+          fread(file.path(data_location, file))
+      }
       # validate_raw_data(new_sales_data, sales = TRUE)
 
+      # Sort out the format of the date column
+      if (grepl("-", new_data$Date[1])) {
+        new_data[, Date := as.Date(Date, format = "%Y-%m-%d")]
+      } else {
+        new_data[, Date := as.Date(Date, format = "%b %d,%Y")]
+      }
+      
       # If it's the first file, create the data table
       if (!exists("dataset")) {
         
