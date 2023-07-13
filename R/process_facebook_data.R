@@ -27,6 +27,9 @@ process_facebook_data <- function(dataset, country_lookup) {
   daily_data <- data_no_duplicates[, .(Facebook_Ads = -sum(`Amount spent (GBP)`)),
                                    keyby = c("Date", "Marketplace")]
   
+  # Set all ASIN to Oblivion for the moment
+  daily_data[, ASIN := "B087676DTB"]
+  
   aggregated_data <- data_no_duplicates[, .(Facebook_Ads = -sum(`Amount spent (GBP)`)),
                                         keyby = c("Year", "Month", "Marketplace")]
   

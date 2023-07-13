@@ -3,10 +3,9 @@
 moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FALSE, ku_prop = FALSE) {
 
   # Aggregate by date
-  # Facebook Ad spend is duplicated across ASINs and negative, so just take the min
   aggregated_royalties <- royalty_data[, .(Royalty = sum(GBP_royalty),
                                            AMS_Ads = sum(AMS_Ads),
-                                           Facebook_Ads = min(Facebook_Ads),
+                                           Facebook_Ads = sum(Facebook_Ads),
                                            Sales_royalty = sum(GBP_royalty_sales),
                                            KU_royalty = sum(GBP_royalty_ku),
                                            orders = sum(orders),

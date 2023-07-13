@@ -169,7 +169,7 @@ server <- function(input, output) {
     data_output$combined_data <- 
       data_output$combined_data %>%
       merge(data_output$daily_facebook_data,
-            by = c("Date", "Marketplace"),
+            by = c("Date", "Marketplace", "ASIN"),
             all.x = TRUE) %>%
       merge(
         data_output$daily_ams_data %>%
