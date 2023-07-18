@@ -1,6 +1,6 @@
 
 # Define a function to plot a chart with a moving average royalty
-moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FALSE, ku_prop = FALSE) {
+moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FALSE, ku_prop = FALSE, align = "right") {
 
   # Aggregate by date
   aggregated_royalties <- royalty_data[, .(Royalty = sum(GBP_royalty),
@@ -13,13 +13,13 @@ moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FA
                                        keyby = Date]
   
   # Compute n-day moving average
-  aggregated_royalties[, ":=" (Gross_Royalty_ma = frollmean(Royalty, n = ma_days, algo = "exact", align = "center"),
-                               AMS_Ads_ma = frollmean(AMS_Ads, n = ma_days, algo = "exact", align = "center"),
-                               Facebook_Ads_ma = frollmean(Facebook_Ads, n = ma_days, algo = "exact", align = "center"),
-                               Sales_Royalty_ma = frollmean(Sales_royalty, n = ma_days, algo = "exact", align = "center"),
-                               KU_Royalty_ma = frollmean(KU_royalty, n = ma_days, algo = "exact", align = "center"),
-                               ku_sales_rollsum = frollsum(ku_sales, n = ma_days, algo = "exact", align = "center"),
-                               order_rollsum = frollsum(orders, n = ma_days, algo = "exact", align = "center")
+  aggregated_royalties[, ":=" (Gross_Royalty_ma = frollmean(Royalty, n = ma_days, algo = "exact", align = align),
+                               AMS_Ads_ma = frollmean(AMS_Ads, n = ma_days, algo = "exact", align = align),
+                               Facebook_Ads_ma = frollmean(Facebook_Ads, n = ma_days, algo = "exact", align = align),
+                               Sales_Royalty_ma = frollmean(Sales_royalty, n = ma_days, algo = "exact", align = align),
+                               KU_Royalty_ma = frollmean(KU_royalty, n = ma_days, algo = "exact", align = align),
+                               ku_sales_rollsum = frollsum(ku_sales, n = ma_days, algo = "exact", align = align),
+                               order_rollsum = frollsum(orders, n = ma_days, algo = "exact", align = align)
                                )][, ":="(
                                  Net_Royalties_ma = Gross_Royalty_ma + AMS_Ads_ma + Facebook_Ads_ma,
                                  KU_Read_Order_Proportion_ma = ku_sales_rollsum / (ku_sales_rollsum + order_rollsum)
