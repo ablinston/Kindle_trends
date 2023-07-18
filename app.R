@@ -78,6 +78,14 @@ ui <- navbarPage(
              column(6, plotlyOutput("chart_revenge_ku_readthrough_all"))
            )
   ),
+  tabPanel("Test Changes",
+           fluidRow(
+             column(4, dateInput("changes_start_date", "Start date", value = "2022-04-06")),
+             column(4, dateInput("changes_change_date", "Date of change", value = "2023-07-18")),
+             column(4, dateInput("changes_end_date", "End date", value = Sys.Date()))
+           ),
+           h2("Summary"),
+  ),
   tabPanel("Net Income",
            fluidRow(
            ),
