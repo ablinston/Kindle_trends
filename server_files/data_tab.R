@@ -61,6 +61,25 @@ observeEvent(input$load, {
   data_output$combined_data <- merge(data_output$combined_data, series_info[, .(ASIN, kenp_length)], by = "ASIN")
   data_output$combined_data[, ku_sales := kenp / kenp_length
                               ][, kenp_length := NULL]
+
+  # Get wide data that can be used for read-through
+  data_output$combined_data_wide <- rbindlist(list(
+    copy(data_output$combined_data)[, .(Marketplace = "All",
+                                        orders = sum(orders, na.rm = TRUE),
+                                        kenp = sum(kenp, na.rm = TRUE)),
+                                    by = c("Date", "ASIN")] %>%
+      as.data.table,
+    copy(data_output$combined_data)[, ":=" (orders = fifelse(is.na(orders), 0, orders),
+                                            kenp = fifelse(is.na(kenp), 0, kenp))
+                                    ][, .(Date, ASIN, Marketplace, orders, kenp)]
+  ), use.names = TRUE) %>%
+    pivot_wider(
+      id_cols = c("Date", "Marketplace"),
+      names_from = c("ASIN"),
+      values_from = c("orders", "kenp")
+    ) %>%
+    replace(is.na(.), 0) %>%
+    as.data.table
   
   removeNotification("loading")
 
