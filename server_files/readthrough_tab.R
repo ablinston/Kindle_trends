@@ -1,4 +1,100 @@
 
+
+# Get data ready for charts
+observe({
+  # Check whether the royalty data exists
+  req(data_output$combined_data)
+  
+  data_output$wide_all_markets <-
+    data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
+                                  kenp = sum(kenp, na.rm = TRUE)),
+                              by = c("Date", "ASIN")] %>%
+    pivot_wider(
+      id_cols = c("Date"),
+      names_from = c("ASIN"),
+      values_from = c("orders", "kenp")
+    ) %>%
+    replace(is.na(.), 0) %>%
+    as.data.table
+  
+  data_output$wide_split_markets <-
+    data_output$combined_data[, ":=" (orders = fifelse(is.na(orders), 0, orders),
+                                      kenp = fifelse(is.na(kenp), 0, kenp))] %>%
+    pivot_wider(
+      id_cols = c("Date", "Marketplace"),
+      names_from = c("ASIN"),
+      values_from = c("orders", "kenp")
+    ) %>%
+    replace(is.na(.), 0) %>%
+    as.data.table
+  
+  # Order the data ready for rolling sums
+  setorderv(data_output$wide_all_markets, cols = c("Date"))
+  setorderv(data_output$wide_split_markets, cols = c("Marketplace", "Date"))
+  
+  # Go through the books in the series and compute read-through
+  for (book in series_info$book) {
+    
+    # Save the ASIN of the book in question
+    asin <- series_info$ASIN[series_info$book == book]
+    
+    # Compute the historic rolling sum
+    data_output$wide_all_markets[, (paste0("sum_order_", asin)) := frollsum(get(paste0("orders_", asin)),
+                                                                            input$rolling_sum_days,
+                                                                            algo = "exact",
+                                                                            align = "right")
+    ][, (paste0("sum_kenp_", asin)) := frollsum(get(paste0("kenp_", asin)),
+                                                input$rolling_sum_days,
+                                                algo = "exact",
+                                                align = "right")]
+    
+    data_output$wide_split_markets[, (paste0("sum_order_", asin)) := frollsum(get(paste0("orders_", asin)),
+                                                                              input$rolling_sum_days,
+                                                                              algo = "exact",
+                                                                              align = "right"),
+                                   by = c("Marketplace")
+    ][, (paste0("sum_kenp_", asin)) := frollsum(get(paste0("kenp_", asin)),
+                                                input$rolling_sum_days,
+                                                algo = "exact",
+                                                align = "right"),
+      by = c("Marketplace")]
+    
+    # If not the first book in the series, compute the read-through rate                  
+    if (book > 1) {
+      prior_asin <- series_info$ASIN[series_info$book == (book - 1)]
+      
+      data_output$wide_all_markets[, (paste0("sales_readthrough_", asin)) := get(paste0("sum_order_", asin)) / get(paste0("sum_order_", prior_asin))
+      ][, (paste0("ku_readthrough_", asin)) := (
+        (get(paste0("sum_kenp_", asin)) / series_info$kenp_length[series_info$book == book]) / 
+          (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1]))
+      ][, (paste0("ku_sample_size_", asin)) := (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1])
+      ][, (paste0("sales_sample_size_", asin)) := get(paste0("sum_order_", prior_asin))]
+      
+      data_output$wide_split_markets[, (paste0("sales_readthrough_", asin)) := get(paste0("sum_order_", asin)) / get(paste0("sum_order_", prior_asin)),
+                                     by = c("Marketplace")
+      ][, (paste0("ku_readthrough_", asin)) := (
+        (get(paste0("sum_kenp_", asin)) / series_info$kenp_length[series_info$book == book]) / 
+          (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1])),
+        by = c("Marketplace")
+      ][, (paste0("ku_sample_size_", asin)) := (get(paste0("sum_kenp_", prior_asin)) / series_info$kenp_length[series_info$book == book - 1]),
+        by = c("Marketplace")
+      ][, (paste0("sales_sample_size_", asin)) := get(paste0("sum_order_", prior_asin)),
+        by = c("Marketplace")]
+    }
+  }
+  
+  # Combined the data to allow filtering
+  if (!is.null(data_output$wide_all_markets)) {
+    data_output$wide_all_markets[, Marketplace := "All"]
+    data_output$wide_combined <-
+      rbindlist(list(data_output$wide_all_markets,
+                     data_output$wide_split_markets),
+                fill = TRUE)
+  }
+  
+  # browser()
+})
+
 # Filter the read-through data based on selections
 observe({
   
