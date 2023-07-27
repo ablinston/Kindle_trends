@@ -47,8 +47,7 @@ moving_average_royalty_chart <- function(royalty_data, ma_days, include_net = FA
                 aes(x = Date, y = GBP_Amount, group = Measure, color = Measure),
                 linetype = "dashed") +
       geom_bar(data = aggregated_royalties_long %>% filter(Measure %in% c("AMS_Ads", "Facebook_Ads")),
-               aes(x = Date, y = GBP_Amount, fill = Measure, color = Measure), stat = "identity") +
-      ylim(min(c(aggregated_royalties$Facebook_Ads, aggregated_royalties$AMS_Ads)), max(aggregated_royalties$Gross_Royalty_ma))
+               aes(x = Date, y = GBP_Amount, fill = Measure, color = Measure), stat = "identity")
 
   } else if (ku_prop){
     # If we want the KU proportion then add it as a secondary axis. Use plotly directly

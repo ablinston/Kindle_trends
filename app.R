@@ -84,7 +84,22 @@ ui <- navbarPage(
              column(4, dateInput("changes_change_date", "Date of change", value = "2023-07-18")),
              column(4, dateInput("changes_end_date", "End date", value = Sys.Date()))
            ),
-           h2("Summary"),
+           h2("Readthrough Before"),
+           fluidRow(
+             column(12, DTOutput("readthrough_before_change"))
+           ),
+           h2("Readthrough After"),
+           fluidRow(
+             column(12, DTOutput("readthrough_after_change"))
+           ),
+           h2("Royalties Before"),
+           fluidRow(
+             column(12, DTOutput("royalties_before_change"))
+           ),
+           h2("Royalties After"),
+           fluidRow(
+             column(12, DTOutput("royalties_after_change"))
+           )
   ),
   tabPanel("Net Income",
            fluidRow(

@@ -11,6 +11,7 @@ library(tidyr)
 library(plotly)
 library(lubridate)
 library(stringr)
+library(DT)
 
 # Load all functions
 for (filename in list.files("R")) {
