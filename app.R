@@ -62,20 +62,9 @@ ui <- navbarPage(
                         choices = c("All", "Amazon.com", "Amazon.co.uk", "Amazon.com.au", "Amazon.ca"), 
                         selected = "All"),
            br(),
-           h2("Viridian Legion"),
            fluidRow(
-             column(6, plotlyOutput("chart_VL_sales_readthrough_all")),
-             column(6, plotlyOutput("chart_VL_ku_readthrough_all"))
-           ),
-           h2("Fate Of The Slayer"),
-           fluidRow(
-             column(6, plotlyOutput("chart_fate_sales_readthrough_all")),
-             column(6, plotlyOutput("chart_fate_ku_readthrough_all"))
-           ),
-           h2("Slayer's Revenge"),
-           fluidRow(
-             column(6, plotlyOutput("chart_revenge_sales_readthrough_all")),
-             column(6, plotlyOutput("chart_revenge_ku_readthrough_all"))
+             column(6, plotlyOutput("chart_sales_readthrough_all")),
+             column(6, plotlyOutput("chart_ku_readthrough_all"))
            )
   ),
   tabPanel("Test Changes",

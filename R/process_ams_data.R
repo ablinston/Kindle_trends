@@ -39,7 +39,10 @@ process_ams_data <- function(dataset, country_lookup) {
   }
 
   # Get daily spend
-  daily_data <- data_no_duplicates[, .(AMS_Ads = sum(AMS_Ads, na.rm = TRUE)),
+  daily_data <- data_no_duplicates[, .(AMS_Ads = sum(AMS_Ads, na.rm = TRUE),
+                                       AMS_clicks = sum(Clicks, na.rm = TRUE),
+                                       AMS_orders = sum(`14 Day Total Orders (#)`, na.rm = TRUE),
+                                       AMS_kenp = sum(`14 Day Total KENP Read (#)`, na.rm = TRUE)),
                                    keyby = c("Date", "Marketplace", "ASIN")]
 
   # Get monthly spend per marketplace

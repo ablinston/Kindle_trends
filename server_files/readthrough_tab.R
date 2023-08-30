@@ -4,49 +4,59 @@
 observe({
   # Check whether the royalty data exists
   req(data_output$combined_data, input$rolling_sum_days)
-  # browser()
   
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
+  data_output$combined_data_readthrough <-
+    rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
+                   data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
+                                                 kenp = sum(kenp, na.rm = TRUE)),
+                                             by = c("Date", "ASIN")][, Marketplace := "All"]),
+              use.names = TRUE) %>%
+    # Merge on series info
+    .[series_info, on = "ASIN"]
+
+  # Set order for data for correct rolling sums
+  setorderv(data_output$combined_data_readthrough, c("ASIN", "Marketplace", "Date"))
+
+  # Compute rolling sums for readthrough
+  data_output$combined_data_readthrough[, ":=" (
+    order_rollsum = frollsum(
+      orders,
+      n = input$rolling_sum_days,
+      algo = "exact",
+      align = "right"
+    ),
+    ku_rollsum = frollsum(
+      kenp,
+      n = input$rolling_sum_days,
+      algo = "exact",
+      align = "right"
+    ) / kenp_length
+  ),
+  keyby = c("ASIN", "Marketplace")]
+
+  # Set new order for book and series readthrough calcs
+  setorderv(data_output$combined_data_readthrough, c("Marketplace", "Date", "series", "book"))
+
+  # Calculate the readthrough for each book using leads
+  data_output$combined_data_readthrough[, ":=" (prior_book_order_rollsum = shift(order_rollsum, n = 1, type = "lag"),
+                                                prior_book_ku_rollsum = shift(ku_rollsum, n = 1, type = "lag")),
+                                        keyby = c("Marketplace", "Date", "series")
+  # Calculate readthrough
+  ][, ":=" (sales_readthrough = order_rollsum / prior_book_order_rollsum,
+            ku_readthrough = ku_rollsum / prior_book_ku_rollsum)]
   
-  # data_output$combined_data_readthrough <- 
-  #   rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
-  #                  data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
-  #                                                kenp = sum(kenp, na.rm = TRUE)),
-  #                                            by = c("Date", "ASIN")][, Marketplace := "All"]),
-  #             use.names = TRUE) %>%
-  #   # Merge on series info
-  #   .[series_info[, .(ASIN, series, book, kenp_length)], on = "ASIN"]
-  # 
-  # # Set order for data for correct rolling sums
-  # setorderv(data_output$combined_data_readthrough, c("ASIN", "Marketplace", "Date"))
-  # 
-  # # Compute rolling sums for readthrough
-  # data_output$combined_data_readthrough[, ":=" (
-  #   order_rollsum = frollsum(
-  #     orders,
-  #     n = input$rolling_sum_days,
-  #     algo = "exact",
-  #     align = "right"
-  #   ),
-  #   ku_rollsum = frollsum(
-  #     kenp,
-  #     n = input$rolling_sum_days,
-  #     algo = "exact",
-  #     align = "right"
-  #   ) / kenp_length
-  # ),
-  # keyby = c("ASIN", "Marketplace")]
-  # 
-  # # Set new order for book and series readthrough calcs
-  # setorderv(data_output$combined_data_readthrough, c("Marketplace", "Date", "series", "book"))
-  # 
-  # # Calculate the readthrough for each book using leads
-  # data_output$combined_data_readthrough[, ":=" (prior_book_order_rollsum = shift(order_rollsum, n = 1, type = "lag"),
-  #                                               prior_book_ku_rollsum = shift(ku_rollsum, n = 1, type = "lag")),
-  #                                       keyby = c("Marketplace", "Date", "series")
-  # # Calculate readthrough
-  # ][, ":=" (sales_readthrough = order_rollsum / prior_book_order_rollsum,
-  #           ku_readthrough = ku_rollsum / prior_book_ku_rollsum)]
+  # Calculate rolling sums for AMS ads
+  setorderv(data_output$raw_ams_data, c("ASIN", "Date"))
+  
+  # # Compute the rolling sums
+  # data_output$combined_data_readthrough <-
+  #   data_output$raw_ams_data[, .(Date, Currency, ASIN, Clicks, `Cost Per Click (CPC)`, `14 Day Total Orders (#)`, `14 Day Total KENP Read (#)`)
+  #                            ][, ":=" (AMS_orders_rollingsum = frollsum(`14 Day Total Orders (#)`, 
+  #                                                                       n = input$rolling_sum_days))]
+  
+  ## OLD CODE AFTER HERE. NEEDS CLEANING UP
+  
   
   data_output$wide_all_markets <-
     data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
@@ -135,7 +145,7 @@ observe({
                 fill = TRUE)
   }
   
-  # browser()
+  browser()
 })
 
 # Filter the read-through data based on selections
@@ -149,6 +159,49 @@ observe({
   
 })
 
+# Get sales readthrough rates
+output$chart_sales_readthrough_all <- renderPlotly({
+  
+  req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$readthrough_filter)
+  
+  dt <- data_output$combined_data_readthrough[Marketplace == input$readthrough_filter & 
+                                              (Date >= max(Date) - input$historic_days_readthrough),]
+  plt <- plot_ly(data = dt,
+          x = ~ Date,
+          y = ~ sales_readthrough,
+          color = ~ name,
+          type = 'scatter',
+          mode = 'lines') %>%
+    layout(yaxis = list(title = "Sales Readthrough",
+                        range = c(0, max(dt$sales_readthrough))),
+           title = "Sales Readthrough")
+  
+  rm(dt)
+  
+  return(plt)
+})
+
+# Get ku readthrough rates
+output$chart_ku_readthrough_all <- renderPlotly({
+  
+  req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$readthrough_filter)
+  
+  dt <- data_output$combined_data_readthrough[Marketplace == input$readthrough_filter & 
+                                                (Date >= max(Date) - input$historic_days_readthrough),]
+  plt <- plot_ly(data = dt,
+                 x = ~ Date,
+                 y = ~ ku_readthrough,
+                 color = ~ name,
+                 type = 'scatter',
+                 mode = 'lines') %>%
+    layout(yaxis = list(title = "KU Readthrough",
+                        range = c(0, max(dt$sales_readthrough))),
+           title = "KU Readthrough")
+  
+  rm(dt)
+  
+  return(plt)
+})
 
 output$table_readthrough <- renderTable({
   if(input$historic_days_readthrough > 0 & !is.null(data_output$combined_data)) {

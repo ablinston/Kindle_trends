@@ -91,7 +91,9 @@ observeEvent(input$load, {
     ASIN = unique(data_output$combined_data$ASIN),
     Marketplace = unique(data_output$combined_data$Marketplace)
     )) %>%
-    .[data_output$combined_data, on = c("Date", "ASIN", "Marketplace")]
+    .[data_output$combined_data, on = c("Date", "ASIN", "Marketplace")] %>%
+    replace(is.na(.), 0) %>%
+    as.data.table
   
   removeNotification("loading")
 
