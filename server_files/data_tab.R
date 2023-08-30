@@ -81,6 +81,18 @@ observeEvent(input$load, {
     replace(is.na(.), 0) %>%
     as.data.table
   
+  # Expand data so that it contains records for all days and all marketplaces
+  data_output$combined_data <- 
+    data.table(expand.grid(
+    Date = seq(as.Date(min(c(data_output$combined_data$Date))),
+               as.Date(max(c(data_output$combined_data$Date))),
+               by = "days"
+    ),
+    ASIN = unique(data_output$combined_data$ASIN),
+    Marketplace = unique(data_output$combined_data$Marketplace)
+    )) %>%
+    .[data_output$combined_data, on = c("Date", "ASIN", "Marketplace")]
+  
   removeNotification("loading")
 
 })

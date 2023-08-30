@@ -3,7 +3,50 @@
 # Get data ready for charts
 observe({
   # Check whether the royalty data exists
-  req(data_output$combined_data)
+  req(data_output$combined_data, input$rolling_sum_days)
+  # browser()
+  
+  # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
+  
+  # data_output$combined_data_readthrough <- 
+  #   rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
+  #                  data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
+  #                                                kenp = sum(kenp, na.rm = TRUE)),
+  #                                            by = c("Date", "ASIN")][, Marketplace := "All"]),
+  #             use.names = TRUE) %>%
+  #   # Merge on series info
+  #   .[series_info[, .(ASIN, series, book, kenp_length)], on = "ASIN"]
+  # 
+  # # Set order for data for correct rolling sums
+  # setorderv(data_output$combined_data_readthrough, c("ASIN", "Marketplace", "Date"))
+  # 
+  # # Compute rolling sums for readthrough
+  # data_output$combined_data_readthrough[, ":=" (
+  #   order_rollsum = frollsum(
+  #     orders,
+  #     n = input$rolling_sum_days,
+  #     algo = "exact",
+  #     align = "right"
+  #   ),
+  #   ku_rollsum = frollsum(
+  #     kenp,
+  #     n = input$rolling_sum_days,
+  #     algo = "exact",
+  #     align = "right"
+  #   ) / kenp_length
+  # ),
+  # keyby = c("ASIN", "Marketplace")]
+  # 
+  # # Set new order for book and series readthrough calcs
+  # setorderv(data_output$combined_data_readthrough, c("Marketplace", "Date", "series", "book"))
+  # 
+  # # Calculate the readthrough for each book using leads
+  # data_output$combined_data_readthrough[, ":=" (prior_book_order_rollsum = shift(order_rollsum, n = 1, type = "lag"),
+  #                                               prior_book_ku_rollsum = shift(ku_rollsum, n = 1, type = "lag")),
+  #                                       keyby = c("Marketplace", "Date", "series")
+  # # Calculate readthrough
+  # ][, ":=" (sales_readthrough = order_rollsum / prior_book_order_rollsum,
+  #           ku_readthrough = ku_rollsum / prior_book_ku_rollsum)]
   
   data_output$wide_all_markets <-
     data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
@@ -103,7 +146,7 @@ observe({
   data_output$readthrough_filtered <-
     data_output$wide_combined[(Date >= max(Date) - input$historic_days_readthrough) &
                                 (Marketplace == input$readthrough_filter),]
-
+  
 })
 
 

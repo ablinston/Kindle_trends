@@ -52,7 +52,7 @@ ui <- navbarPage(
   ),
   tabPanel("Read-through",
            fluidRow(
-             column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 30)),
+             column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 60)),
              column(6, numericInput("historic_days_readthrough", "History to view", value = 120))
              ),
            h2("Summary"),
