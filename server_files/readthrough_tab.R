@@ -4,7 +4,7 @@
 observe({
   # Check whether the royalty data exists
   req(data_output$combined_data, input$rolling_sum_days)
-  
+  browser()
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
   data_output$combined_data_readthrough <-
     rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
@@ -49,11 +49,102 @@ observe({
   # Calculate rolling sums for AMS ads
   setorderv(data_output$raw_ams_data, c("ASIN", "Date"))
   
-  # # Compute the rolling sums
-  # data_output$combined_data_readthrough <-
-  #   data_output$raw_ams_data[, .(Date, Currency, ASIN, Clicks, `Cost Per Click (CPC)`, `14 Day Total Orders (#)`, `14 Day Total KENP Read (#)`)
-  #                            ][, ":=" (AMS_orders_rollingsum = frollsum(`14 Day Total Orders (#)`, 
-  #                                                                       n = input$rolling_sum_days))]
+  # Compute the rolling sums
+  data_output$combined_data_readthrough <-
+    # Ensure all dates present
+    data.table(expand.grid(
+      Date = seq(as.Date(min(c(data_output$daily_ams_data$Date))),
+                 as.Date(max(c(data_output$daily_ams_data$Date))),
+                 by = "days"
+      ),
+      ASIN = unique(data_output$daily_ams_data$ASIN),
+      Marketplace = unique(data_output$daily_ams_data$Marketplace)
+    )) %>%
+    .[data_output$daily_ams_data, on = c("Date", "ASIN", "Marketplace")] %>%
+    replace(is.na(.), 0) %>%
+    as.data.table %>%
+    .[, ":=" (AMS_orders_rollingsum = frollsum(AMS_orders,
+                                               n = input$rolling_sum_days,
+                                               algo = "exact",
+                                               align = "right"),
+              AMS_kenp_rollingsum = frollsum(AMS_kenp,
+                                             n = input$rolling_sum_days,
+                                             algo = "exact",
+                                             align = "right"),
+              AMS_clicks_rollingsum = frollsum(AMS_clicks,
+                                               n = input$rolling_sum_days,
+                                               algo = "exact",
+                                               align = "right"),
+              AMS_Ads_rollingsum = frollsum(AMS_Ads,
+                                            n = input$rolling_sum_days,
+                                            algo = "exact",
+                                            align = "right")),
+      keyby = c("ASIN", "Marketplace")] %>%
+    # Right join onto readthrough data
+    merge(data_output$combined_data_readthrough,
+          by = c("Date", "ASIN", "Marketplace"),
+          all.y = TRUE)
+  
+  # Calculate the ROI, starting with the last books of a series
+  # USED OVERALL KENP ROYALTY AS ONE FROM DATA LOOKS INCORRECT FOR SOME DATES
+  
+  data_output$combined_data_readthrough[, c("ku_return_lead", "sales_return_lead") := 0]
+  
+  setorderv(data_output$combined_data_readthrough, c("Marketplace", "Date", "series", "book"))
+  
+  # Calculate book 1 reads for overall readthrough and the earnings for each book in turn
+  for (book_no in c(max(data_output$combined_data_readthrough$book):2)) {
+    
+    # Shift the book 1 info onto the book
+    data_output$combined_data_readthrough[, ":=" (
+      book1_order_rollsum = shift(order_rollsum, n = (book_no - 1), type = "lag"),
+      book1_ku_rollsum = shift(ku_rollsum, n = (book_no - 1), type = "lag")
+    ),
+    keyby = c("Marketplace", "Date", "series")]
+    
+    # Calculate the profit of this book from a book 1 sale
+    data_output$combined_data_readthrough[book == book_no, ":="
+                                          (
+                                            sales_return = (order_rollsum / book1_order_rollsum * sale_royalty) + sales_return_lead,
+                                            ku_return = (
+                                              ku_rollsum / book1_ku_rollsum * input$kenp_royalty_per_page_read * kenp_length
+                                            ) + ku_return_lead
+                                          )]
+    
+    # Shift the data onto the prior book in the series
+    data_output$combined_data_readthrough[, ":=" (
+      ku_return_lead = shift(ku_return, n = 1, type = "lead"),
+      sales_return_lead = shift(sales_return, n = 1, type = "lead")
+    ),
+    keyby = c("Marketplace", "Date", "series")]
+  }
+  
+  data_output$combined_data_readthrough[, c("book1_order_rollsum", "book1_ku_rollsum", "sales_return", "ku_return") := NULL]
+
+  # Make final calculation of expected earnings for book 1 advertising
+  data_output$combined_data_readthrough[book == 1,
+                                        AMS_expected_earnings_per_click := 
+                                          (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
+                                          ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead)]
+  
+  for (book in c(max(series_info$book)):2) {
+      data_output$combined_data_readthrough[book == book,
+                                             ":=" (ku_return = ku_readthrough * (input$kenp_royalty_per_page_read * kenp_length + ku_return_lead),
+                                                   sales_return = sales_readthrough * (sale_royalty + sales_return_lead))
+      ][, ":=" (ku_return = fifelse(is.na(ku_return), 0, ku_return),
+                sales_return = fifelse(is.na(sales_return), 0, sales_return))]
+      
+      # Combine the info with the prior book in the series
+      data_output$combined_data_readthrough[, ":=" (ku_return_lead = shift(ku_return, n = 1, type = "lead"),
+                                                     sales_return_lead = shift(sales_return, n = 1, type = "lead"))]
+  }
+  
+  data_output$combined_data_readthrough[book == 1,
+                                         ":=" (ku_return = ku_readthrough * (input$kenp_royalty_per_page_read * AMS_kenp + ku_return_lead),
+                                               sales_return = sales_readthrough * (sale_royalty * AMS_orders + sales_return_lead))
+  ][, ":=" (ku_return = fifelse(is.na(ku_return), 0, ku_return),
+            sales_return = fifelse(is.na(sales_return), 0, sales_return))
+    ][ ":=" ()]
   
   ## OLD CODE AFTER HERE. NEEDS CLEANING UP
   
