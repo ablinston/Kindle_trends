@@ -274,7 +274,7 @@ observe({
                                                 book == 1 &
                                                 (Date >= max(Date) - input$historic_days_readthrough),] %>%
     as.data.frame()
- 
+
   output$chart_AMS_USA <- renderPlotly({
    
     req(data_output$combined_data_readthrough, input$historic_days_readthrough, data_output$dt)
@@ -305,7 +305,13 @@ observe({
                 type = 'scatter',
                 mode = 'lines',
                 name = "AMS conversion rate",
-                yaxis = "y1") %>%
+                yaxis = "y1",
+                color = I("blue")) %>%
+      add_ribbons(ymin = ~(AMS_conversion_rate - 1.96 * sqrt(AMS_conversion_rate * (1 - AMS_conversion_rate) / AMS_clicks_rollingsum)),
+                  ymax = ~(AMS_conversion_rate + 1.96 * sqrt(AMS_conversion_rate * (1 - AMS_conversion_rate) / AMS_clicks_rollingsum)),
+                  name = "Conversion rate approx 95% confidence interval",
+                  color = I("blue"),
+                  opacity = 0.15) %>%
       add_trace(y = ~sales_profit_per_conversion,
                 type = 'scatter',
                 mode = 'lines',
@@ -327,10 +333,11 @@ observe({
       #           name = "AMS KU conversion rate",
       #           yaxis = "y1") %>%
       layout(yaxis = list(title = "Rate",
-                          range = c(0, max(data_output$dt$AMS_conversion_rate)),
+                          range = c(0, 2 * max(data_output$dt$AMS_conversion_rate)),
                           side = "left"),
              yaxis2 = list(
                title = "£",
+               range = c(0, max(data_output$dt[,c("ku_profit_per_conversion", "sales_profit_per_conversion")])),
                side = "right",
                overlaying = "y"  # Align with the first y-axis
              ),
