@@ -3,7 +3,7 @@
 # Get data ready for charts
 observe({
   # Check whether the royalty data exists
-  req(data_output$combined_data, input$rolling_sum_days, data_output$daily_ams_data)
+  req(data_output$combined_data, input$rolling_sum_days, input$rolling_sum_days_conversion, data_output$daily_ams_data)
 
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
   dt <-
@@ -49,26 +49,26 @@ observe({
   # Calculate rolling sums for AMS ads
   setorderv(data_output$raw_ams_data, c("ASIN", "Date"))
 
-  # Compute the rolling sums
+  # Compute the rolling sums for AMS conversion rates
   data_output$combined_data_readthrough <-
     merge(dt,
           data_output$daily_ams_data,
           by = c("Date", "ASIN", "Marketplace"),
           all.x = TRUE) %>%
     .[, ":=" (AMS_orders_rollingsum = frollsum(AMS_orders,
-                                               n = input$rolling_sum_days,
+                                               n = input$rolling_sum_days_conversion,
                                                algo = "exact",
                                                align = "right"),
               AMS_kenp_rollingsum = frollsum(AMS_kenp,
-                                             n = input$rolling_sum_days,
+                                             n = input$rolling_sum_days_conversion,
                                              algo = "exact",
                                              align = "right"),
               AMS_clicks_rollingsum = frollsum(AMS_clicks,
-                                               n = input$rolling_sum_days,
+                                               n = input$rolling_sum_days_conversion,
                                                algo = "exact",
                                                align = "right"),
               AMS_Ads_rollingsum = frollsum(AMS_Ads,
-                                            n = input$rolling_sum_days,
+                                            n = input$rolling_sum_days_conversion,
                                             algo = "exact",
                                             align = "right")),
       keyby = c("ASIN", "Marketplace")]
@@ -104,6 +104,8 @@ observe({
 
   # Make final calculation of expected earnings for book 1 advertising
   data_output$combined_data_readthrough[book == 1, ":=" (
+    AMS_sales_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum),
+    AMS_ku_conversion_rate = ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum),
     AMS_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum) +
       ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum),
     sales_profit_per_conversion = sale_royalty + sales_return_lead,
@@ -307,13 +309,23 @@ observe({
       add_trace(y = ~sales_profit_per_conversion,
                 type = 'scatter',
                 mode = 'lines',
-                name = "Profit (Sales) per conversion",
+                name = "Profit per sale conversion",
                 yaxis = "y2") %>%
       add_trace(y = ~ku_profit_per_conversion,
                 type = 'scatter',
                 mode = 'lines',
-                name = "Profit (KU) per conversion",
+                name = "Profit per KU conversion",
                 yaxis = "y2") %>%
+      # add_trace(y = ~AMS_sales_conversion_rate,
+      #           type = 'scatter',
+      #           mode = 'lines',
+      #           name = "AMS sales conversion rate",
+      #           yaxis = "y1") %>%
+      # add_trace(y = ~AMS_ku_conversion_rate,
+      #           type = 'scatter',
+      #           mode = 'lines',
+      #           name = "AMS KU conversion rate",
+      #           yaxis = "y1") %>%
       layout(yaxis = list(title = "Rate",
                           range = c(0, max(data_output$dt$AMS_conversion_rate)),
                           side = "left"),
