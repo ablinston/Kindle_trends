@@ -46,6 +46,24 @@ process_ams_data <- function(dataset, country_lookup) {
                                        kenp_royalty_pp = mean(`Estimated KENP royalties` / `14 Day Total KENP Read (#)`, na.rm = TRUE)),
                                    keyby = c("Date", "Marketplace", "ASIN")]
 
+  # Ensure all dates are present
+  daily_data <- merge(data.table(expand.grid(
+    Date = seq(as.Date(min(c(
+      daily_data$Date
+    ))),
+    as.Date(max(c(
+      daily_data$Date
+    ))),
+    by = "days"),
+    ASIN = unique(daily_data$ASIN),
+    Marketplace = unique(daily_data$Marketplace)
+    )),
+    daily_data,
+    on = c("Marketplace", "ASIN", "Date"),
+    all.x = TRUE) %>%
+    replace(is.na(.), 0) %>%
+    as.data.table
+  
   # Get monthly spend per marketplace
   daily_data[, ":=" (Year = year(Date), Month = month(Date))]
   

@@ -4,9 +4,9 @@
 observe({
   # Check whether the royalty data exists
   req(data_output$combined_data, input$rolling_sum_days, data_output$daily_ams_data)
-
+browser()
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
-  data_output$combined_data_readthrough <-
+  dt <-
     rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
                    data_output$combined_data[, .(orders = sum(orders, na.rm = TRUE),
                                                  kenp = sum(kenp, na.rm = TRUE)),
@@ -16,10 +16,10 @@ observe({
     .[series_info, on = "ASIN"]
 
   # Set order for data for correct rolling sums
-  setorderv(data_output$combined_data_readthrough, c("ASIN", "Marketplace", "Date"))
+  setorderv(dt, c("ASIN", "Marketplace", "Date"))
 
   # Compute rolling sums for readthrough
-  data_output$combined_data_readthrough[, ":=" (
+  dt[, ":=" (
     order_rollsum = frollsum(
       orders,
       n = input$rolling_sum_days,
@@ -36,33 +36,25 @@ observe({
   keyby = c("ASIN", "Marketplace")]
 
   # Set new order for book and series readthrough calcs
-  setorderv(data_output$combined_data_readthrough, c("Marketplace", "Date", "series", "book"))
+  setorderv(dt, c("Marketplace", "Date", "series", "book"))
 
   # Calculate the readthrough for each book using leads
-  data_output$combined_data_readthrough[, ":=" (prior_book_order_rollsum = shift(order_rollsum, n = 1, type = "lag"),
-                                                prior_book_ku_rollsum = shift(ku_rollsum, n = 1, type = "lag")),
-                                        keyby = c("Marketplace", "Date", "series")
+  dt[, ":=" (prior_book_order_rollsum = shift(order_rollsum, n = 1, type = "lag"),
+             prior_book_ku_rollsum = shift(ku_rollsum, n = 1, type = "lag")),
+     keyby = c("Marketplace", "Date", "series")
   # Calculate readthrough
   ][, ":=" (sales_readthrough = order_rollsum / prior_book_order_rollsum,
             ku_readthrough = ku_rollsum / prior_book_ku_rollsum)]
-  
+
   # Calculate rolling sums for AMS ads
   setorderv(data_output$raw_ams_data, c("ASIN", "Date"))
-  
+
   # Compute the rolling sums
   data_output$combined_data_readthrough <-
-    # Ensure all dates present
-    data.table(expand.grid(
-      Date = seq(as.Date(min(c(data_output$daily_ams_data$Date))),
-                 as.Date(max(c(data_output$daily_ams_data$Date))),
-                 by = "days"
-      ),
-      ASIN = unique(data_output$daily_ams_data$ASIN),
-      Marketplace = unique(data_output$daily_ams_data$Marketplace)
-    )) %>%
-    .[data_output$daily_ams_data, on = c("Date", "ASIN", "Marketplace")] %>%
-    replace(is.na(.), 0) %>%
-    as.data.table %>%
+    merge(dt,
+          data_output$daily_ams_data,
+          by = c("Date", "ASIN", "Marketplace"),
+          all.x = TRUE) %>%
     .[, ":=" (AMS_orders_rollingsum = frollsum(AMS_orders,
                                                n = input$rolling_sum_days,
                                                algo = "exact",
@@ -79,29 +71,27 @@ observe({
                                             n = input$rolling_sum_days,
                                             algo = "exact",
                                             align = "right")),
-      keyby = c("ASIN", "Marketplace")] %>%
-    # Right join onto readthrough data
-    merge(data_output$combined_data_readthrough,
-          by = c("Date", "ASIN", "Marketplace"),
-          all.y = TRUE)
+      keyby = c("ASIN", "Marketplace")]
+
+  rm(dt)
   
   # Calculate the ROI, starting with the last books of a series
   # USED OVERALL KENP ROYALTY AS ONE FROM DATA LOOKS INCORRECT FOR SOME DATES
-  
+
   data_output$combined_data_readthrough[, c("ku_return_lead", "sales_return_lead") := 0]
-  
+
   setorderv(data_output$combined_data_readthrough, c("Marketplace", "Date", "series", "book"))
-  
+
   # Calculate book 1 reads for overall readthrough and the earnings for each book in turn
   for (book_no in c(max(data_output$combined_data_readthrough$book):2)) {
-    
+
     # Calculate the profit of this book from a book 1 sale
     data_output$combined_data_readthrough[book == book_no, ":="
                                           (
                                             sales_return = fifelse(sales_readthrough > 1, 1, sales_readthrough) * (sale_royalty + sales_return_lead),
                                             ku_return = fifelse(ku_readthrough > 1, 1, ku_readthrough) * (input$kenp_royalty_per_page_read * kenp_length + ku_return_lead)
                                           )]
-    
+
     # Shift the data onto the prior book in the series
     data_output$combined_data_readthrough[, ":=" (
       ku_return_lead = shift(ku_return, n = 1, type = "lead"),
@@ -109,19 +99,19 @@ observe({
     ),
     keyby = c("Marketplace", "Date", "series")]
   }
-  
+
   data_output$combined_data_readthrough[, c("sales_return", "ku_return") := NULL]
 
   # Make final calculation of expected earnings for book 1 advertising
   data_output$combined_data_readthrough[book == 1, ":=" (
-    AMS_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum) + 
+    AMS_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum) +
       ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum)
   )][book == 1, ":=" (
     AMS_expected_earnings_per_click =
       (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
       ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead),
     AMS_actual_CPC = -AMS_Ads_rollingsum / AMS_clicks_rollingsum)]
-  
+
 
   
   ## OLD CODE AFTER HERE. NEEDS CLEANING UP
@@ -273,10 +263,10 @@ output$chart_ku_readthrough_all <- renderPlotly({
 
 # Get AMS US Ad performance chart
 output$chart_AMS_USA <- renderPlotly({
-  
+
   req(data_output$combined_data_readthrough, input$historic_days_readthrough)
-  
-  dt <- data_output$combined_data_readthrough[Marketplace == "Amazon.com" & 
+
+  dt <- data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
                                                 book == 1 &
                                                 (Date >= max(Date) - input$historic_days_readthrough),]
   plt <- plot_ly(data = dt,
@@ -292,9 +282,9 @@ output$chart_AMS_USA <- renderPlotly({
     layout(yaxis = list(title = "£",
                         range = c(0, max(dt$AMS_actual_CPC))),
            title = "AMS USA performance (rolling averages)")
-  
+
   rm(dt)
-  
+
   return(plt)
 })
 
