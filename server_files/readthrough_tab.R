@@ -3,8 +3,8 @@
 # Get data ready for charts
 observe({
   # Check whether the royalty data exists
-  req(data_output$combined_data, input$rolling_sum_days)
-  browser()
+  req(data_output$combined_data, input$rolling_sum_days, data_output$daily_ams_data)
+
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
   data_output$combined_data_readthrough <-
     rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
@@ -95,20 +95,11 @@ observe({
   # Calculate book 1 reads for overall readthrough and the earnings for each book in turn
   for (book_no in c(max(data_output$combined_data_readthrough$book):2)) {
     
-    # Shift the book 1 info onto the book
-    data_output$combined_data_readthrough[, ":=" (
-      book1_order_rollsum = shift(order_rollsum, n = (book_no - 1), type = "lag"),
-      book1_ku_rollsum = shift(ku_rollsum, n = (book_no - 1), type = "lag")
-    ),
-    keyby = c("Marketplace", "Date", "series")]
-    
     # Calculate the profit of this book from a book 1 sale
     data_output$combined_data_readthrough[book == book_no, ":="
                                           (
-                                            sales_return = (order_rollsum / book1_order_rollsum * sale_royalty) + sales_return_lead,
-                                            ku_return = (
-                                              ku_rollsum / book1_ku_rollsum * input$kenp_royalty_per_page_read * kenp_length
-                                            ) + ku_return_lead
+                                            sales_return = fifelse(sales_readthrough > 1, 1, sales_readthrough) * (sale_royalty + sales_return_lead),
+                                            ku_return = fifelse(ku_readthrough > 1, 1, ku_readthrough) * (input$kenp_royalty_per_page_read * kenp_length + ku_return_lead)
                                           )]
     
     # Shift the data onto the prior book in the series
@@ -119,32 +110,19 @@ observe({
     keyby = c("Marketplace", "Date", "series")]
   }
   
-  data_output$combined_data_readthrough[, c("book1_order_rollsum", "book1_ku_rollsum", "sales_return", "ku_return") := NULL]
+  data_output$combined_data_readthrough[, c("sales_return", "ku_return") := NULL]
 
   # Make final calculation of expected earnings for book 1 advertising
-  data_output$combined_data_readthrough[book == 1,
-                                        AMS_expected_earnings_per_click := 
-                                          (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
-                                          ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead)]
+  data_output$combined_data_readthrough[book == 1, ":=" (
+    AMS_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum) + 
+      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum)
+  )][book == 1, ":=" (
+    AMS_expected_earnings_per_click =
+      (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
+      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead),
+    AMS_actual_CPC = -AMS_Ads_rollingsum / AMS_clicks_rollingsum)]
   
-  for (book in c(max(series_info$book)):2) {
-      data_output$combined_data_readthrough[book == book,
-                                             ":=" (ku_return = ku_readthrough * (input$kenp_royalty_per_page_read * kenp_length + ku_return_lead),
-                                                   sales_return = sales_readthrough * (sale_royalty + sales_return_lead))
-      ][, ":=" (ku_return = fifelse(is.na(ku_return), 0, ku_return),
-                sales_return = fifelse(is.na(sales_return), 0, sales_return))]
-      
-      # Combine the info with the prior book in the series
-      data_output$combined_data_readthrough[, ":=" (ku_return_lead = shift(ku_return, n = 1, type = "lead"),
-                                                     sales_return_lead = shift(sales_return, n = 1, type = "lead"))]
-  }
-  
-  data_output$combined_data_readthrough[book == 1,
-                                         ":=" (ku_return = ku_readthrough * (input$kenp_royalty_per_page_read * AMS_kenp + ku_return_lead),
-                                               sales_return = sales_readthrough * (sale_royalty * AMS_orders + sales_return_lead))
-  ][, ":=" (ku_return = fifelse(is.na(ku_return), 0, ku_return),
-            sales_return = fifelse(is.na(sales_return), 0, sales_return))
-    ][ ":=" ()]
+
   
   ## OLD CODE AFTER HERE. NEEDS CLEANING UP
   
@@ -235,8 +213,7 @@ observe({
                      data_output$wide_split_markets),
                 fill = TRUE)
   }
-  
-  browser()
+ 
 })
 
 # Filter the read-through data based on selections
@@ -288,6 +265,33 @@ output$chart_ku_readthrough_all <- renderPlotly({
     layout(yaxis = list(title = "KU Readthrough",
                         range = c(0, max(dt$sales_readthrough))),
            title = "KU Readthrough")
+  
+  rm(dt)
+  
+  return(plt)
+})
+
+# Get AMS US Ad performance chart
+output$chart_AMS_USA <- renderPlotly({
+  
+  req(data_output$combined_data_readthrough, input$historic_days_readthrough)
+  
+  dt <- data_output$combined_data_readthrough[Marketplace == "Amazon.com" & 
+                                                book == 1 &
+                                                (Date >= max(Date) - input$historic_days_readthrough),]
+  plt <- plot_ly(data = dt,
+                 x = ~ Date) %>%
+    add_trace(y = ~AMS_expected_earnings_per_click,
+              type = 'scatter',
+              mode = 'lines',
+              name = "AMS profit per click") %>%
+    add_trace(y = ~AMS_actual_CPC,
+              type = 'scatter',
+              mode = 'lines',
+              name = "AMS cost per click") %>%
+    layout(yaxis = list(title = "£",
+                        range = c(0, max(dt$AMS_actual_CPC))),
+           title = "AMS USA performance (rolling averages)")
   
   rm(dt)
   

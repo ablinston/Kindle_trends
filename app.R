@@ -65,7 +65,9 @@ ui <- navbarPage(
            fluidRow(
              column(6, plotlyOutput("chart_sales_readthrough_all")),
              column(6, plotlyOutput("chart_ku_readthrough_all"))
-           )
+           ),
+           fluidRow(plotlyOutput("chart_AMS_USA")),
+           fluidRow()
   ),
   tabPanel("Test Changes",
            fluidRow(
