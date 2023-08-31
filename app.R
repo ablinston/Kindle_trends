@@ -55,20 +55,42 @@ ui <- navbarPage(
              column(6, numericInput("rolling_sum_days", "Prior X days for read-through", value = 60)),
              column(6, numericInput("historic_days_readthrough", "History to view", value = 120))
              ),
-           h2("Summary"),
-           tableOutput("table_readthrough"),
-           br(),
-           radioButtons("readthrough_filter", "Read-through marketplace", 
-                        choices = c("All", "Amazon.com", "Amazon.co.uk", "Amazon.com.au", "Amazon.ca"), 
-                        selected = "All"),
-           br(),
-           fluidRow(
-             column(6, plotlyOutput("chart_sales_readthrough_all")),
-             column(6, plotlyOutput("chart_ku_readthrough_all"))
+           tabsetPanel(tabPanel("Table",
+                    h2("Summary"),
+                    tableOutput("table_readthrough")),
+           tabPanel(
+             "Read-through",
+             radioButtons(
+               "readthrough_filter",
+               "Read-through marketplace",
+               choices = c(
+                 "All",
+                 "Amazon.com",
+                 "Amazon.co.uk",
+                 "Amazon.com.au",
+                 "Amazon.ca"
+               ),
+               selected = "All"
+             ),
+             br(),
+             fluidRow(br(),
+                      column(
+               6, plotlyOutput("chart_sales_readthrough_all")
+             ),
+             column(
+               6, plotlyOutput("chart_ku_readthrough_all")
+             ))
            ),
-           fluidRow(plotlyOutput("chart_AMS_USA")),
-           fluidRow()
-  ),
+           tabPanel("AMS",
+                    br(),
+                    fluidRow(column(
+                      6, plotlyOutput("chart_AMS_USA")
+                    ),
+                    column(
+                      6, plotlyOutput("chart_AMS_USA_underlying")
+                    )),
+                    fluidRow())
+  )),
   tabPanel("Test Changes",
            fluidRow(
              column(4, dateInput("changes_start_date", "Start date", value = "2022-04-06")),

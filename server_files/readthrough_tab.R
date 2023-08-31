@@ -4,7 +4,7 @@
 observe({
   # Check whether the royalty data exists
   req(data_output$combined_data, input$rolling_sum_days, data_output$daily_ams_data)
-browser()
+
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
   dt <-
     rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],
@@ -105,7 +105,9 @@ browser()
   # Make final calculation of expected earnings for book 1 advertising
   data_output$combined_data_readthrough[book == 1, ":=" (
     AMS_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum) +
-      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum)
+      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum),
+    sales_profit_per_conversion = sale_royalty + sales_return_lead,
+    ku_profit_per_conversion = (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead)
   )][book == 1, ":=" (
     AMS_expected_earnings_per_click =
       (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
@@ -262,30 +264,68 @@ output$chart_ku_readthrough_all <- renderPlotly({
 })
 
 # Get AMS US Ad performance chart
-output$chart_AMS_USA <- renderPlotly({
+observe({
 
   req(data_output$combined_data_readthrough, input$historic_days_readthrough)
 
-  dt <- data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
+  data_output$dt <- data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
                                                 book == 1 &
-                                                (Date >= max(Date) - input$historic_days_readthrough),]
-  plt <- plot_ly(data = dt,
-                 x = ~ Date) %>%
-    add_trace(y = ~AMS_expected_earnings_per_click,
-              type = 'scatter',
-              mode = 'lines',
-              name = "AMS profit per click") %>%
-    add_trace(y = ~AMS_actual_CPC,
-              type = 'scatter',
-              mode = 'lines',
-              name = "AMS cost per click") %>%
-    layout(yaxis = list(title = "£",
-                        range = c(0, max(dt$AMS_actual_CPC))),
-           title = "AMS USA performance (rolling averages)")
+                                                (Date >= max(Date) - input$historic_days_readthrough),] %>%
+    as.data.frame()
+ 
+  output$chart_AMS_USA <- renderPlotly({
+   
+    req(data_output$combined_data_readthrough, input$historic_days_readthrough, data_output$dt)
 
-  rm(dt)
+    plot_ly(data = data_output$dt,
+                   x = ~ Date) %>%
+      add_trace(y = ~AMS_expected_earnings_per_click,
+                type = 'scatter',
+                mode = 'lines',
+                name = "AMS profit per click") %>%
+      add_trace(y = ~AMS_actual_CPC,
+                type = 'scatter',
+                mode = 'lines',
+                name = "AMS cost per click") %>%
+      layout(yaxis = list(title = "£",
+                          range = c(0, max(data_output$dt$AMS_actual_CPC))),
+             title = "AMS USA performance (rolling averages)")
+    
+  })
+  
+  output$chart_AMS_USA_underlying <- renderPlotly({
+    
+    req(data_output$combined_data_readthrough, input$historic_days_readthrough, data_output$dt)
+    
+    plot_ly(data = data_output$dt,
+                   x = ~ Date) %>%
+      add_trace(y = ~AMS_conversion_rate,
+                type = 'scatter',
+                mode = 'lines',
+                name = "AMS conversion rate",
+                yaxis = "y1") %>%
+      add_trace(y = ~sales_profit_per_conversion,
+                type = 'scatter',
+                mode = 'lines',
+                name = "Profit (Sales) per conversion",
+                yaxis = "y2") %>%
+      add_trace(y = ~ku_profit_per_conversion,
+                type = 'scatter',
+                mode = 'lines',
+                name = "Profit (KU) per conversion",
+                yaxis = "y2") %>%
+      layout(yaxis = list(title = "Rate",
+                          range = c(0, max(data_output$dt$AMS_conversion_rate)),
+                          side = "left"),
+             yaxis2 = list(
+               title = "£",
+               side = "right",
+               overlaying = "y"  # Align with the first y-axis
+             ),
+             title = "AMS USA underlying performance (rolling averages)")
+    
+  })
 
-  return(plt)
 })
 
 output$table_readthrough <- renderTable({
