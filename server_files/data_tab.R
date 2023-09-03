@@ -11,6 +11,11 @@ observeEvent(input$load, {
   data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                           input$kenp_royalty_per_page_read)
 
+  # Get currency conversion info
+  data_output$currency_lookup <- 
+    get_currency_lookup(paste0("GBP",
+                               c("GBP", "USD", "CAD", "EUR", "INR", "BRL", "MXN", "AUD", "JPY"), "=X"))
+  
   # Bank statements
   data_output$raw_bank_data <- load_statements(input$bank_data_path)
   data_output$bank_data <- process_bank_data(data_output$raw_bank_data)

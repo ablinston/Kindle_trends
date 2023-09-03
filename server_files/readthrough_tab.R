@@ -3,7 +3,8 @@
 # Get data ready for charts
 observe({
   # Check whether the royalty data exists
-  req(data_output$combined_data, input$rolling_sum_days, input$rolling_sum_days_conversion, data_output$daily_ams_data)
+  req(data_output$combined_data, input$rolling_sum_days, input$rolling_sum_days_conversion, 
+      data_output$daily_ams_data, data_output$currency_lookup)
 browser()
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
   dt <-
@@ -67,7 +68,7 @@ browser()
                                                n = input$rolling_sum_days_conversion,
                                                algo = "exact",
                                                align = "right"),
-              AMS_Ads_rollingsum = frollsum(AMS_Ads,
+              AMS_Ads_Native_Curr_rollingsum = frollsum(AMS_Ads_Native_Curr,
                                             n = input$rolling_sum_days_conversion,
                                             algo = "exact",
                                             align = "right")),
@@ -114,7 +115,7 @@ browser()
     AMS_expected_earnings_per_click =
       (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
       ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead),
-    AMS_actual_CPC = -AMS_Ads_rollingsum / AMS_clicks_rollingsum)]
+    AMS_actual_CPC = -AMS_Ads_Native_Curr_rollingsum / AMS_clicks_rollingsum)]
 
 
   
@@ -289,7 +290,7 @@ observe({
                 type = 'scatter',
                 mode = 'lines',
                 name = "AMS cost per click") %>%
-      layout(yaxis = list(title = "£",
+      layout(yaxis = list(title = "$",
                           range = c(0, max(data_output$dt$AMS_actual_CPC))),
              title = "AMS USA performance (rolling averages)")
     
@@ -336,7 +337,7 @@ observe({
                           range = c(0, 2 * max(data_output$dt$AMS_conversion_rate)),
                           side = "left"),
              yaxis2 = list(
-               title = "£",
+               title = "$",
                range = c(0, max(data_output$dt[,c("ku_profit_per_conversion", "sales_profit_per_conversion")])),
                side = "right",
                overlaying = "y"  # Align with the first y-axis
