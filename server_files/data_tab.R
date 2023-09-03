@@ -58,7 +58,7 @@ observeEvent(input$load, {
                                            data_output$combined_data$Date <= max(data_output$daily_ams_data$Date)] <- 0
   
   # Calculate the ku sales as a propotion of full book reads
-  data_output$combined_data <- merge(data_output$combined_data, series_info[, .(ASIN, kenp_length)], by = "ASIN")
+  data_output$combined_data <- merge(data_output$combined_data, series_info[, .(ASIN, kenp_length, series)], by = "ASIN")
   data_output$combined_data[, ku_sales := kenp / kenp_length
                               ][, kenp_length := NULL]
 
@@ -94,6 +94,15 @@ observeEvent(input$load, {
     .[data_output$combined_data, on = c("Date", "ASIN", "Marketplace")] %>%
     replace(is.na(.), 0) %>%
     as.data.table
+  
+  # Get the series list
+  output$series_dropdown_menu <- renderUI({
+    req(series_info)
+    
+    selectInput("series_dropdown",
+                label = "Select series",
+                choices = c("All", unique(series_info$series)))
+  })
   
   removeNotification("loading")
 

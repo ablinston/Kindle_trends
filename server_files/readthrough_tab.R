@@ -4,7 +4,7 @@
 observe({
   # Check whether the royalty data exists
   req(data_output$combined_data, input$rolling_sum_days, input$rolling_sum_days_conversion, data_output$daily_ams_data)
-
+browser()
   # WROTE THIS CODE TO EVENTUALLY ALLOW MULTIPLE SERIES AND REMOVE LOOPS. IT WORKS
   dt <-
     rbindlist(list(data_output$combined_data[, .(Date, ASIN, Marketplace, orders, kenp)],

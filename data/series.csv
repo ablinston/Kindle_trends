@@ -1,5 +1,6 @@
 series,book,ASIN,kenp_length,name,sale_royalty,currency
-1,1,B087676DTB,565,Oblivion,2.643,USD
-1,2,B08766L2BZ,720,Viridian Legion,3.343,USD
-1,3,B09GPMRTF7,882,Fate Of The Slayer,3.343,USD
-1,4,B0BHR5YXXV,804,Slayer's Revenge,3.343,USD
+1,1,B087676DTB,565,Oblivion,2.1,GBP
+1,2,B08766L2BZ,720,Viridian Legion,2.72,GBP
+1,3,B09GPMRTF7,882,Fate Of The Slayer,2.72,GBP
+1,4,B0BHR5YXXV,804,Slayer's Revenge,2.72,GBP
+Boxset,1,B0CBCB4XV4,2764,Slayer's Dark Rebirth,5.24,GBP
