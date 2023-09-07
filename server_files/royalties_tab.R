@@ -2,11 +2,18 @@
 # Filter the data ready for the charts
 observe({
   # Check whether the royalty data exists
-  req(input$historic_months, data_output$combined_data)
+  req(input$historic_months, data_output$combined_data, input$series_dropdown)
 
-  data_output$filtered_data <-
-    data_output$combined_data[Date >= (max(Date) - (input$historic_months) * 30) &
-                                ASIN %in% series_info$ASIN,]
+  # See if we want all series or a selection
+  if (input$series_dropdown == "All") {
+    data_output$filtered_data <-
+      data_output$combined_data[Date >= (max(Date) - (input$historic_months) * 30),]
+  } else {
+    data_output$filtered_data <-
+      data_output$combined_data[Date >= (max(Date) - (input$historic_months) * 30) &
+                                  series == input$series_dropdown,]
+  }
+  
 
 })
 

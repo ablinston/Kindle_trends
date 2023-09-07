@@ -23,7 +23,8 @@ process_ams_data <- function(dataset, country_lookup) {
                               all.x = TRUE)
   
   # Format spend and convert to GBP
-  data_no_duplicates[, AMS_Ads := -as.numeric(gsub("[£$]", "", Spend, perl = TRUE)) / XR]
+  data_no_duplicates[, ":=" (AMS_Ads = -as.numeric(gsub("[£$]", "", Spend, perl = TRUE)) / XR,
+                             AMS_Ads_Native_Curr = -as.numeric(gsub("[£$]", "", Spend, perl = TRUE)))]
   
   # Sort by date
   setorder(data_no_duplicates, Date)
@@ -43,6 +44,7 @@ process_ams_data <- function(dataset, country_lookup) {
                                        AMS_clicks = sum(Clicks, na.rm = TRUE),
                                        AMS_orders = sum(`14 Day Total Orders (#)`, na.rm = TRUE),
                                        AMS_kenp = sum(`14 Day Total KENP Read (#)`, na.rm = TRUE),
+                                       AMS_Ads_Native_Curr = sum(AMS_Ads_Native_Curr, na.rm = TRUE),
                                        kenp_royalty_pp = mean(`Estimated KENP royalties` / `14 Day Total KENP Read (#)`, na.rm = TRUE)),
                                    keyby = c("Date", "Marketplace", "ASIN")]
 

@@ -11,6 +11,11 @@ observeEvent(input$load, {
   data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                           input$kenp_royalty_per_page_read)
 
+  # Get currency conversion info
+  data_output$currency_lookup <- 
+    get_currency_lookup(paste0("GBP",
+                               c("GBP", "USD", "CAD", "EUR", "INR", "BRL", "MXN", "AUD", "JPY"), "=X"))
+  
   # Bank statements
   data_output$raw_bank_data <- load_statements(input$bank_data_path)
   data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
@@ -58,7 +63,7 @@ observeEvent(input$load, {
                                            data_output$combined_data$Date <= max(data_output$daily_ams_data$Date)] <- 0
   
   # Calculate the ku sales as a propotion of full book reads
-  data_output$combined_data <- merge(data_output$combined_data, series_info[, .(ASIN, kenp_length)], by = "ASIN")
+  data_output$combined_data <- merge(data_output$combined_data, series_info[, .(ASIN, kenp_length, series)], by = "ASIN")
   data_output$combined_data[, ku_sales := kenp / kenp_length
                               ][, kenp_length := NULL]
 
@@ -94,6 +99,15 @@ observeEvent(input$load, {
     .[data_output$combined_data, on = c("Date", "ASIN", "Marketplace")] %>%
     replace(is.na(.), 0) %>%
     as.data.table
+  
+  # Get the series list
+  output$series_dropdown_menu <- renderUI({
+    req(series_info)
+    
+    selectInput("series_dropdown",
+                label = "Select series",
+                choices = c("All", unique(series_info$series)))
+  })
   
   removeNotification("loading")
 
