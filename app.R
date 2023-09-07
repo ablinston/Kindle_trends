@@ -85,6 +85,7 @@ ui <- navbarPage(
            ),
            tabPanel("AMS",
                     br(),
+                    fluidRow(column(3, uiOutput("AMS_ASIN_filter_menu"))),
                     fluidRow(column(
                       6, plotlyOutput("chart_AMS_USA")
                     ),

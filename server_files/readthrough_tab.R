@@ -119,6 +119,20 @@ observe({
 
 })
 
+output$AMS_ASIN_filter_menu <- renderUI({
+  
+  req(data_output$combined_data_readthrough)
+
+  selectInput("AMS_ASIN_filter",
+              label = "Select ASIN",
+              choices = 
+                data_output$combined_data_readthrough %>%
+                filter(!is.na(AMS_actual_CPC)) %>%
+                pull(ASIN) %>%
+                unique)
+  
+})
+
 
 # Get sales readthrough rates
 output$chart_sales_readthrough_all <- renderPlotly({
@@ -167,11 +181,13 @@ output$chart_ku_readthrough_all <- renderPlotly({
 # Get AMS US Ad performance chart
 observe({
 
-  req(data_output$combined_data_readthrough, input$historic_days_readthrough)
-
-  data_output$dt <- data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
-                                                book == 1 &
-                                                (Date >= max(Date) - input$historic_days_readthrough),] %>%
+  req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$AMS_ASIN_filter)
+browser()
+  data_output$dt <- 
+    data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
+                                            ASIN == input$AMS_ASIN_filter &
+                                            book == 1 &
+                                            (Date >= max(Date) - input$historic_days_readthrough),] %>%
     as.data.frame()
 
   output$chart_AMS_USA <- renderPlotly({
