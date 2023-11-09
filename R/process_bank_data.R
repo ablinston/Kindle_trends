@@ -37,10 +37,18 @@ process_bank_data <- function(dataset){
   # dataset[Month == -2, ":=" (Month = 10, Year = Year - 1)]
   
   # Classify spend and income
+  # Remove stars from references
+  dataset[, Reference := gsub("\\*", "", Reference)]
   dataset[, Category := "Other expenses"]
   dataset[Amount > 0, Category := "Income"]
   dataset[grepl("FACEBOOK", Reference, ignore.case = TRUE), Category := "Facebook Ads"]
-  dataset[grepl("AMZN AD", Reference, ignore.case = TRUE), Category := "AMS Ads"]
+ 
+  for (item in c("AMZN AD",
+                 "Amazon Media Group",
+                 "AMZMarket")) {
+    dataset[grepl(item, Reference, ignore.case = TRUE), Category := "AMS Ads"]
+  }
+
   book_selling_costs <- c("Bookfunnel", "BOOKBAR", "FUSSY", "BOOKBUB")
   for (item in book_selling_costs) {
     dataset[grepl(item, Reference, ignore.case = TRUE), Category := "Other Ad Costs"]

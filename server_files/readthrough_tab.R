@@ -182,7 +182,7 @@ output$chart_ku_readthrough_all <- renderPlotly({
 observe({
 
   req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$AMS_ASIN_filter)
-browser()
+
   data_output$dt <- 
     data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
                                             ASIN == input$AMS_ASIN_filter &
