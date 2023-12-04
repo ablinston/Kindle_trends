@@ -139,7 +139,7 @@ ui <- navbarPage(
   ),
   tabPanel("Cash Accounting",
            fluidRow(
-             column(6, dateInput("cash_accounting_start", "Start date", value = "2022-04-06")),
+             column(6, dateInput("cash_accounting_start", "Start date", value = "2023-04-06")),
              column(6, dateInput("cash_accounting_end", "End date", value = Sys.Date()))
            ),
            fluidRow(
