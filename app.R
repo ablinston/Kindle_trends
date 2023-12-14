@@ -11,7 +11,7 @@ ui <- navbarPage(
            textInput("bank_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Bank"),
            textInput("ams_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/AMS"),
            textInput("facebook_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Facebook"),
-           numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.0041),
+           numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.0042),
            actionButton("load", "Load & Process Data"),
            br()
            ),
