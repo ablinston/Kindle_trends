@@ -2,6 +2,11 @@
 
 get_currency_lookup <- function(currencies){ # example c("GBPGBP=X", GBPUSD=X")
 
+  # Check if the file was modified today. If so, use saved version
+  if (date(file.info("data/exchange_rates.csv")$mtime) == Sys.Date()) {
+    return (fread("data/exchange_rates.csv"))
+  }
+  
   currency_error <- try({priceR::exchange_rate_latest(currency = "GBP")})
 
   # If error, then grab currencies from a backup
