@@ -3,6 +3,8 @@
 # When the load data button is pressed, read in the KDP data excel files
 observeEvent(input$load, {
   
+  req(input$kenp_royalty_per_page_read)
+  
   # KDP data
   data_output$raw_data <- load_kdp_files(input$data_path)
   
@@ -10,9 +12,14 @@ observeEvent(input$load, {
   
   data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                           input$kenp_royalty_per_page_read)
-browser()
+
   # KDP payment data
   data_output$kdp_payment_data <- load_kdp_payment_files(input$payment_data_path)
+  
+  # Process the KDP payment data
+  data_output$kdp_payment_data <- 
+    data_output$kdp_payment_data %>%
+    process_kdp_payment_data()
   
   # Get currency conversion info
   data_output$currency_lookup <- 
@@ -111,7 +118,7 @@ browser()
                 label = "Select series",
                 choices = c("All", unique(series_info$series)))
   })
-  browser()
+ 
   removeNotification("loading")
 
 })

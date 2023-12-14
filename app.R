@@ -11,15 +11,15 @@ ui <- navbarPage(
            textInput("bank_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Bank"),
            textInput("ams_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/AMS"),
            textInput("facebook_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Facebook"),
-           actionButton("load", "Load All Data"),
+           numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.0041),
+           actionButton("load", "Load & Process Data"),
            br()
            ),
   tabPanel("Royalties",
            fluidRow(
              column(3, uiOutput("series_dropdown_menu")),
              column(3, sliderInput("historic_months", "Months of history to view", min = 1, max = 50, value = 4)),
-             column(3, sliderInput("ma_days", "Days to take moving average across", min = 1, max = 28, value = 7)),
-             column(3, numericInput("kenp_royalty_per_page_read", "USD royalty per KENP read", value = 0.004561577))
+             column(3, sliderInput("ma_days", "Days to take moving average across", min = 1, max = 28, value = 7))
            ),
            h2("Charts"),
            fluidRow(
@@ -51,6 +51,26 @@ ui <- navbarPage(
              column(6, plotlyOutput("chart_all_books_ROW")),
              column(6, plotlyOutput("chart_oblivion_ROW"))
            ),
+  ),
+  tabPanel("KU Payouts",
+           fluidRow(
+             column(3, radioButtons(
+               "ku_payout_marketplace",
+               "Marketplace",
+               choices = c(
+                 "Amazon.com",
+                 "Amazon.co.uk",
+                 "Amazon.com.au",
+                 "Amazon.ca"
+               ),
+               selected = "Amazon.com"
+             )),
+             column(3, sliderInput("historic_months_ku", "Months of history to view", min = 1, max = 50, value = 20))
+           ),
+           h2("Chart"),
+           fluidRow(
+             plotlyOutput("ku_payout_chart")
+           )
   ),
   tabPanel("Read-through",
            fluidRow(
