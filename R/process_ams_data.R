@@ -1,6 +1,6 @@
 
 # Process the data from the list to get royalties earned
-process_ams_data <- function(dataset, country_lookup) {
+process_ams_data <- function(dataset, exchange_rate_data) {
 
   # # For debugging
   # dataset <- load_ams("F:/Writing - Book/Data/AMS")
@@ -16,9 +16,8 @@ process_ams_data <- function(dataset, country_lookup) {
            fromLast = TRUE)
   
   # Get exchange rates
-  currency_lookup <- get_currency_lookup(paste0("GBP", unique(data_no_duplicates$Currency), "=X"))
   data_no_duplicates <- merge(data_no_duplicates, 
-                              currency_lookup, 
+                              exchange_rate_data, 
                               by = "Currency", 
                               all.x = TRUE)
   

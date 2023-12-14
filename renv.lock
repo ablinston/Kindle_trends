@@ -87,18 +87,6 @@
       ],
       "Hash": "e749cae40fa9ef469b6050959517453c"
     },
-    "TTR": {
-      "Package": "TTR",
-      "Version": "0.24.3",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "curl",
-        "xts",
-        "zoo"
-      ],
-      "Hash": "c553a7be22ec50faaebee27be54a1313"
-    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.1",
@@ -398,6 +386,16 @@
         "methods"
       ],
       "Hash": "4f2596dfb05dac67b9dc558e5c6fba2e"
+    },
+    "gsubfn": {
+      "Package": "gsubfn",
+      "Version": "0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "proto"
+      ],
+      "Hash": "a8ebb0bb0edcf041a7649ee43a0e1735"
     },
     "gtable": {
       "Package": "gtable",
@@ -770,6 +768,24 @@
       "Repository": "CRAN",
       "Hash": "95ef9167b75dde9d2ccc3c7528393e7e"
     },
+    "priceR": {
+      "Package": "priceR",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "dplyr",
+        "gsubfn",
+        "jsonlite",
+        "lubridate",
+        "purrr",
+        "stats",
+        "stringi",
+        "stringr",
+        "tidyr"
+      ],
+      "Hash": "a3d85106a5dedec9875d63b7ab2486bc"
+    },
     "progress": {
       "Package": "progress",
       "Version": "1.2.2",
@@ -798,6 +814,13 @@
       ],
       "Hash": "4ab2c43adb4d4699cf3690acd378d75d"
     },
+    "proto": {
+      "Package": "proto",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5cb1623df69ee6102d011c7f78f5791d"
+    },
     "purrr": {
       "Package": "purrr",
       "Version": "1.0.1",
@@ -812,22 +835,6 @@
         "vctrs"
       ],
       "Hash": "d71c815267c640f17ddbf7f16144b4bb"
-    },
-    "quantmod": {
-      "Package": "quantmod",
-      "Version": "0.4.23",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "TTR",
-        "curl",
-        "jsonlite",
-        "methods",
-        "xts",
-        "zoo"
-      ],
-      "Hash": "4e22df5a2501e5f538a380c14ea852a4"
     },
     "rappdirs": {
       "Package": "rappdirs",
@@ -1167,18 +1174,6 @@
         "utils"
       ],
       "Hash": "b8acdf8af494d9ec19ccb2481a9b11c2"
-    },
-    "xts": {
-      "Package": "xts",
-      "Version": "0.13.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "methods",
-        "zoo"
-      ],
-      "Hash": "b8aa1235fd8b0ff10756150b792dc60f"
     },
     "yaml": {
       "Package": "yaml",

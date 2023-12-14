@@ -4,6 +4,10 @@
 observeEvent(input$load, {
   
   req(input$kenp_royalty_per_page_read)
+
+  # Get currency conversion info
+  data_output$currency_lookup <- 
+    get_currency_lookup(c("GBP", "USD", "CAD", "EUR", "INR", "BRL", "MXN", "AUD", "JPY"))
   
   # KDP data
   data_output$raw_data <- load_kdp_files(input$data_path)
@@ -11,7 +15,8 @@ observeEvent(input$load, {
   showNotification("Processing data...", id= "loading", duration = NULL)
   
   data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
-                                                          input$kenp_royalty_per_page_read)
+                                                          input$kenp_royalty_per_page_read,
+                                                          data_output$currency_lookup)
 
   # KDP payment data
   data_output$kdp_payment_data <- load_kdp_payment_files(input$payment_data_path)
@@ -21,18 +26,13 @@ observeEvent(input$load, {
     data_output$kdp_payment_data %>%
     process_kdp_payment_data()
   
-  # Get currency conversion info
-  data_output$currency_lookup <- 
-    get_currency_lookup(paste0("GBP",
-                               c("GBP", "USD", "CAD", "EUR", "INR", "BRL", "MXN", "AUD", "JPY"), "=X"))
-  
   # Bank statements
   data_output$raw_bank_data <- load_statements(input$bank_data_path)
   data_output$bank_data <- process_bank_data(data_output$raw_bank_data)
 
   # AMS data
   data_output$raw_ams_data <- load_ams(input$ams_data_path)
-  ams_data <- process_ams_data(data_output$raw_ams_data)
+  ams_data <- process_ams_data(data_output$raw_ams_data, data_output$currency_lookup)
   data_output$ams_data <- ams_data$ams_data
   data_output$daily_ams_data <- ams_data$daily_ams_data
   rm(ams_data)

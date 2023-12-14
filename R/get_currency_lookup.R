@@ -2,7 +2,7 @@
 
 get_currency_lookup <- function(currencies){ # example c("GBPGBP=X", GBPUSD=X")
 
-  currency_error <- try({getQuote(currencies)})
+  currency_error <- try({priceR::exchange_rate_latest(currency = "GBP")})
 
   # If error, then grab currencies from a backup
   if (class(currency_error) %in% c("error", "try-error")) {
@@ -14,11 +14,14 @@ get_currency_lookup <- function(currencies){ # example c("GBPGBP=X", GBPUSD=X")
     old_currency_lookup <- fread("data/exchange_rates.csv")
     
     currency_conversions <- 
-      getQuote(currencies)
+      priceR::exchange_rate_latest(currency = "GBP")
+    
+    colnames(currency_conversions) <- c("Currency", "XR")
     
     currency_lookup <- 
-      data.table(Currency = str_sub(currencies, 4, 6),
-                 XR = currency_conversions$Open)
+      currency_conversions %>%
+      filter(Currency %in% currencies) %>%
+      as.data.table
     
     # Save in case of error next time
     fwrite(bind_rows(currency_lookup,

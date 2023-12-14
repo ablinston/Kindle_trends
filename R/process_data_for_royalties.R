@@ -1,6 +1,6 @@
 
 # Process the data from the list to get royalties earned
-process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
+process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read, exchange_rate_data) {
 
   # # For debugging
   # data_list <- load_kdp_files("F:/Writing - Book/Sales Data/KDP")
@@ -67,17 +67,12 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
           all.x = TRUE)
   
   # Compute sales figures in GBP
-
-  # Get currencies needed for conversion
-  # First check whether we can get currencies from net
-  currency_lookup <- get_currency_lookup(paste0("GBP",
-                                                unique(sales_data_all_days$Currency), "=X"))
   
   # Merge exchange rates onto table
   sales_data_all_days <-
     merge(
       sales_data_all_days,
-      currency_lookup,
+      exchange_rate_data,
       by = "Currency"
     )
 
@@ -86,7 +81,7 @@ process_data_for_royalties <- function(data_list, kenp_royalty_per_page_read) {
   setnames(sales_data_all_days, c("ASIN/ISBN", "Net Units Sold"), c("ASIN", "orders"))
   
   # Compute GBP KENP
-  kenp_data_all_days[, GBP_royalty_ku := kenp * kenp_royalty_per_page_read / currency_lookup$XR[currency_lookup$Currency == "USD"]]
+  kenp_data_all_days[, GBP_royalty_ku := kenp * kenp_royalty_per_page_read / exchange_rate_data$XR[exchange_rate_data$Currency == "USD"]]
   
   # Sum all royalties for each date
   all_data <- rbindlist(list(sales_data_all_days[, .(Date, ASIN, Marketplace, GBP_royalty_sales, orders)],

@@ -4,7 +4,6 @@
 library(readxl)
 library(data.table)
 library(dplyr)
-library(quantmod)
 library(ggplot2)
 library(shiny)
 library(tidyr)
@@ -12,6 +11,9 @@ library(plotly)
 library(lubridate)
 library(stringr)
 library(DT)
+
+# Set API key for priceR package
+Sys.setenv("EXCHANGERATEHOST_ACCESS_KEY" = "07870c0610538ce81a1477b653bcd902")
 
 # Load all functions
 for (filename in list.files("R")) {
