@@ -6,7 +6,8 @@ source("global.R")
 ui <- navbarPage(
   "KDP royalty analyser",
   tabPanel("Data",
-           textInput("data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/KDP"),
+           textInput("data_path", label = "Path to read KDP sales files from", value = "F:/Writing - Book/Data/KDP - orders"),
+           textInput("payment_data_path", label = "Path to read KDP payment files from", value = "F:/Writing - Book/Data/KDP - payments"),
            textInput("bank_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Bank"),
            textInput("ams_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/AMS"),
            textInput("facebook_data_path", label = "Path to read data files from", value = "F:/Writing - Book/Data/Facebook"),

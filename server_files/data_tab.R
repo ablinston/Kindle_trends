@@ -10,7 +10,10 @@ observeEvent(input$load, {
   
   data_output$combined_data <- process_data_for_royalties(data_output$raw_data,
                                                           input$kenp_royalty_per_page_read)
-
+browser()
+  # KDP payment data
+  data_output$kdp_payment_data <- load_kdp_payment_files(input$payment_data_path)
+  
   # Get currency conversion info
   data_output$currency_lookup <- 
     get_currency_lookup(paste0("GBP",
@@ -108,7 +111,7 @@ observeEvent(input$load, {
                 label = "Select series",
                 choices = c("All", unique(series_info$series)))
   })
-  
+  browser()
   removeNotification("loading")
 
 })
