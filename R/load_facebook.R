@@ -28,9 +28,15 @@ load_facebook <- function(data_location){
     # If it's not already in the data then we process the file, otherwise skip
     if (!(file %in% existing_data_filenames)) {
       
+      # Output stage at
+      message(paste0("Processing: ", file))
+      
       # All sales
       new_data <- 
         fread(file.path(data_location, file))
+      
+      # Remove blank row which is total amounts
+      new_data <- new_data[!is.na(`Campaign name`),]
       
       # validate_raw_data(new_sales_data, sales = TRUE)
 
@@ -44,7 +50,7 @@ load_facebook <- function(data_location){
         dataset$source <- file
         
         # If it's not the first file, attach to the old list
-      } else {
+      } else if (nrow(new_data) > 0) {
         
         new_data[, source := file]
         
