@@ -41,28 +41,29 @@ load_facebook <- function(data_location){
       # validate_raw_data(new_sales_data, sales = TRUE)
 
       # If it's the first file, create the data table
-      if (!exists("dataset")) {
-        
-        # All sales
-        dataset <- new_data
-        
-        # Add an identifier of the filename the data is from
-        dataset$source <- file
-        
-        # If it's not the first file, attach to the old list
-      } else if (nrow(new_data) > 0) {
-        
-        new_data[, source := file]
-        
-        dataset <- 
-          rbindlist(
-            list(dataset,
-                 new_data),
-            fill = TRUE
-          )
-        
+      if (nrow(new_data) > 0) {
+        if (!exists("dataset")) {
+          
+          # All sales
+          dataset <- new_data
+          
+          # Add an identifier of the filename the data is from
+          dataset$source <- file
+          
+          # If it's not the first file, attach to the old list
+        } else {
+          
+          new_data[, source := file]
+          
+          dataset <- 
+            rbindlist(
+              list(dataset,
+                   new_data),
+              fill = TRUE
+            )
+        }
       }
-      
+
       rm(new_data)
       
     }
