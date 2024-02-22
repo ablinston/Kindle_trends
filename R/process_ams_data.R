@@ -60,7 +60,7 @@ process_ams_data <- function(dataset, exchange_rate_data) {
     Marketplace = unique(daily_data$Marketplace)
     )),
     daily_data,
-    on = c("Marketplace", "ASIN", "Date"),
+    by = c("Marketplace", "ASIN", "Date"),
     all.x = TRUE) %>%
     replace(is.na(.), 0) %>%
     as.data.table
