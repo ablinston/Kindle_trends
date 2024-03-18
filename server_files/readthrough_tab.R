@@ -44,8 +44,8 @@ observe({
              prior_book_ku_rollsum = shift(ku_rollsum, n = 1, type = "lag")),
      keyby = c("Marketplace", "Date", "series")
   # Calculate readthrough
-  ][, ":=" (sales_readthrough = order_rollsum / prior_book_order_rollsum,
-            ku_readthrough = ku_rollsum / prior_book_ku_rollsum)]
+  ][, ":=" (sales_readthrough = fifelse(prior_book_order_rollsum == 0, NA, order_rollsum / prior_book_order_rollsum),
+            ku_readthrough = fifelse(prior_book_ku_rollsum == 0, NA, ku_rollsum / prior_book_ku_rollsum))]
 
   # Calculate rolling sums for AMS ads
   setorderv(data_output$raw_ams_data, c("ASIN", "Date"))
@@ -105,17 +105,17 @@ observe({
 
   # Make final calculation of expected earnings for book 1 advertising
   data_output$combined_data_readthrough[book == 1, ":=" (
-    AMS_sales_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum),
-    AMS_ku_conversion_rate = ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum),
-    AMS_conversion_rate = (AMS_orders_rollingsum / AMS_clicks_rollingsum) +
-      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum),
+    AMS_sales_conversion_rate = fifelse(AMS_clicks_rollingsum == 0, NA, AMS_orders_rollingsum / AMS_clicks_rollingsum),
+    AMS_ku_conversion_rate = fifelse(kenp_length == 0 | AMS_clicks_rollingsum == 0, NA, (AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum),
+    AMS_conversion_rate = fifelse(AMS_clicks_rollingsum == 0, NA, (AMS_orders_rollingsum / AMS_clicks_rollingsum) +
+      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum)),
     sales_profit_per_conversion = sale_royalty + sales_return_lead,
     ku_profit_per_conversion = (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead)
   )][book == 1, ":=" (
-    AMS_expected_earnings_per_click =
+    AMS_expected_earnings_per_click = fifelse(AMS_clicks_rollingsum == 0, NA, 
       (AMS_orders_rollingsum / AMS_clicks_rollingsum) * (sale_royalty + sales_return_lead) +
-      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead),
-    AMS_actual_CPC = -AMS_Ads_Native_Curr_rollingsum / AMS_clicks_rollingsum)]
+      ((AMS_kenp_rollingsum / kenp_length) / AMS_clicks_rollingsum) * (kenp_length * input$kenp_royalty_per_page_read + ku_return_lead)),
+    AMS_actual_CPC = fifelse(AMS_clicks_rollingsum == 0, NA, -AMS_Ads_Native_Curr_rollingsum / AMS_clicks_rollingsum))]
 
 })
 
@@ -213,7 +213,13 @@ observe({
   output$chart_AMS_USA_underlying <- renderPlotly({
     
     req(data_output$combined_data_readthrough, input$historic_days_readthrough, data_output$dt)
-    
+
+    cr_lower_bound <- pmax(0, data_output$dt$AMS_conversion_rate - 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
+    cr_upper_bound <- pmax(0, data_output$dt$AMS_conversion_rate + 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
+
+    cr_lower_bound[is.na(cr_lower_bound)] <- 0
+    cr_upper_bound[is.na(cr_upper_bound)] <- 0
+
     plot_ly(data = data_output$dt,
                    x = ~ Date) %>%
       add_trace(y = ~AMS_conversion_rate,
@@ -222,11 +228,11 @@ observe({
                 name = "AMS conversion rate",
                 yaxis = "y1",
                 color = I("blue")) %>%
-      add_ribbons(ymin = ~(AMS_conversion_rate - 1.96 * sqrt(AMS_conversion_rate * (1 - AMS_conversion_rate) / AMS_clicks_rollingsum)),
-                  ymax = ~(AMS_conversion_rate + 1.96 * sqrt(AMS_conversion_rate * (1 - AMS_conversion_rate) / AMS_clicks_rollingsum)),
+      add_ribbons(ymin = ~cr_lower_bound,
+                  ymax = ~cr_upper_bound,
                   name = "Conversion rate approx 95% confidence interval",
                   color = I("blue"),
-                  opacity = 0.15) %>%
+                  opacity = 0.3) %>%
       add_trace(y = ~sales_profit_per_conversion,
                 type = 'scatter',
                 mode = 'lines',

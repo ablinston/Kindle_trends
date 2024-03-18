@@ -2,7 +2,7 @@
 
 # When the load data button is pressed, read in the KDP data excel files
 observeEvent(input$load, {
-  browser()
+ 
   req(input$kenp_royalty_per_page_read)
 
   # Get currency conversion info
