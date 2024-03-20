@@ -217,11 +217,15 @@ observe({
     
     req(data_output$combined_data_readthrough, data_output$dt)
 
-    cr_lower_bound <- pmax(0, data_output$dt$AMS_conversion_rate - 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
-    cr_upper_bound <- pmax(0, data_output$dt$AMS_conversion_rate + 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
-
-    cr_lower_bound[is.na(cr_lower_bound)] <- 0
-    cr_upper_bound[is.na(cr_upper_bound)] <- 0
+    intervals <- binomial_confidence_intervals(
+      data_output$dt$AMS_conversion_rate, 
+      data_output$dt$AMS_clicks_rollingsum)
+      
+    # cr_lower_bound <- pmax(0, data_output$dt$AMS_conversion_rate - 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
+    # cr_upper_bound <- pmax(0, data_output$dt$AMS_conversion_rate + 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
+    # 
+    # cr_lower_bound[is.na(cr_lower_bound)] <- 0
+    # cr_upper_bound[is.na(cr_upper_bound)] <- 0
 
     plot_ly(data = data_output$dt,
                    x = ~ Date) %>%
@@ -231,8 +235,8 @@ observe({
                 name = "AMS conversion rate",
                 yaxis = "y1",
                 color = I("blue")) %>%
-      add_ribbons(ymin = ~cr_lower_bound,
-                  ymax = ~cr_upper_bound,
+      add_ribbons(ymin = ~intervals$Lower,
+                  ymax = ~intervals$Upper,
                   name = "Conversion rate approx 95% confidence interval",
                   color = I("blue"),
                   opacity = 0.3) %>%
