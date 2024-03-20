@@ -137,10 +137,11 @@ output$AMS_ASIN_filter_menu <- renderUI({
 # Get sales readthrough rates
 output$chart_sales_readthrough_all <- renderPlotly({
   
-  req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$readthrough_filter)
+  req(data_output$combined_data_readthrough, input$readthrough_first_date, input$readthrough_last_date, input$readthrough_filter)
   
   dt <- data_output$combined_data_readthrough[Marketplace == input$readthrough_filter & 
-                                              (Date >= max(Date) - input$historic_days_readthrough),]
+                                              (Date <= input$readthrough_last_date) &
+                                                (Date >= input$readthrough_first_date),]
   plt <- plot_ly(data = dt,
           x = ~ Date,
           y = ~ sales_readthrough,
@@ -159,10 +160,11 @@ output$chart_sales_readthrough_all <- renderPlotly({
 # Get ku readthrough rates
 output$chart_ku_readthrough_all <- renderPlotly({
   
-  req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$readthrough_filter)
+  req(data_output$combined_data_readthrough, input$readthrough_first_date, input$readthrough_last_date, input$readthrough_filter)
   
   dt <- data_output$combined_data_readthrough[Marketplace == input$readthrough_filter & 
-                                                (Date >= max(Date) - input$historic_days_readthrough),]
+                                                (Date <= input$readthrough_last_date) &                                                 
+                                                (Date >= input$readthrough_first_date),]
   plt <- plot_ly(data = dt,
                  x = ~ Date,
                  y = ~ ku_readthrough,
@@ -181,18 +183,19 @@ output$chart_ku_readthrough_all <- renderPlotly({
 # Get AMS US Ad performance chart
 observe({
 
-  req(data_output$combined_data_readthrough, input$historic_days_readthrough, input$AMS_ASIN_filter)
+  req(data_output$combined_data_readthrough, input$readthrough_first_date, input$readthrough_last_date, input$AMS_ASIN_filter)
 
   data_output$dt <- 
     data_output$combined_data_readthrough[Marketplace == "Amazon.com" &
                                             ASIN == input$AMS_ASIN_filter &
                                             book == 1 &
-                                            (Date >= max(Date) - input$historic_days_readthrough),] %>%
+                                            (Date <= input$readthrough_last_date) &                                                 
+                                            (Date >= input$readthrough_first_date),] %>%
     as.data.frame()
 
   output$chart_AMS_USA <- renderPlotly({
    
-    req(data_output$combined_data_readthrough, input$historic_days_readthrough, data_output$dt)
+    req(data_output$combined_data_readthrough, data_output$dt)
 
     plot_ly(data = data_output$dt,
                    x = ~ Date) %>%
@@ -212,7 +215,7 @@ observe({
   
   output$chart_AMS_USA_underlying <- renderPlotly({
     
-    req(data_output$combined_data_readthrough, input$historic_days_readthrough, data_output$dt)
+    req(data_output$combined_data_readthrough, data_output$dt)
 
     cr_lower_bound <- pmax(0, data_output$dt$AMS_conversion_rate - 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
     cr_upper_bound <- pmax(0, data_output$dt$AMS_conversion_rate + 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
@@ -270,7 +273,7 @@ observe({
 
 output$table_readthrough <- renderTable({
   
-  req(data_output$combined_data_readthrough, input$historic_days_readthrough)
+  req(data_output$combined_data_readthrough)
   
   dt <- data_output$combined_data_readthrough[Date == max(data_output$combined_data_readthrough$Date) &
                                                 Marketplace %in% c("All", "Amazon.com", "Amazon.co.uk", "Amazon.com.au", "Amazon.ca") &
