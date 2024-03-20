@@ -1,7 +1,7 @@
 # This function takes a proportion and a sample size and calculates an exact binomial 
 # confidence interval while dealing with NAs
 
-binomial_confidence_intervals <- function(
+binomial_confidence_interval <- function(
     proportions,
     sample_sizes,
     confidence_level = 0.95) {

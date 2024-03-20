@@ -134,50 +134,81 @@ output$AMS_ASIN_filter_menu <- renderUI({
 })
 
 
-# Get sales readthrough rates
-output$chart_sales_readthrough_all <- renderPlotly({
-  
-  req(data_output$combined_data_readthrough, input$readthrough_first_date, input$readthrough_last_date, input$readthrough_filter)
-  
-  dt <- data_output$combined_data_readthrough[Marketplace == input$readthrough_filter & 
-                                              (Date <= input$readthrough_last_date) &
-                                                (Date >= input$readthrough_first_date),]
-  plt <- plot_ly(data = dt,
-          x = ~ Date,
-          y = ~ sales_readthrough,
-          color = ~ name,
-          type = 'scatter',
-          mode = 'lines') %>%
-    layout(yaxis = list(title = "Sales Readthrough",
-                        range = c(0, max(dt$sales_readthrough))),
-           title = "Sales Readthrough")
-  
-  rm(dt)
-  
-  return(plt)
-})
 
-# Get ku readthrough rates
-output$chart_ku_readthrough_all <- renderPlotly({
+
+# Get readthrough rates
+observe({
   
   req(data_output$combined_data_readthrough, input$readthrough_first_date, input$readthrough_last_date, input$readthrough_filter)
   
   dt <- data_output$combined_data_readthrough[Marketplace == input$readthrough_filter & 
                                                 (Date <= input$readthrough_last_date) &                                                 
                                                 (Date >= input$readthrough_first_date),]
-  plt <- plot_ly(data = dt,
-                 x = ~ Date,
-                 y = ~ ku_readthrough,
-                 color = ~ name,
-                 type = 'scatter',
-                 mode = 'lines') %>%
-    layout(yaxis = list(title = "KU Readthrough",
-                        range = c(0, max(dt$sales_readthrough))),
-           title = "KU Readthrough")
   
-  rm(dt)
+  output$chart_ku_readthrough_all <- renderPlotly({
+    plt <- plot_ly(data = dt,
+                   x = ~ Date,
+                   y = ~ ku_readthrough,
+                   color = ~ name,
+                   type = 'scatter',
+                   mode = 'lines') %>%
+      layout(yaxis = list(title = "KU Readthrough",
+                          range = c(0, max(dt$sales_readthrough))),
+             title = "KU Readthrough") 
+  })
   
-  return(plt)
+  # Get KU readthrough
+  output$chart_ku_readthrough_vl <- renderPlotly({
+    
+    intervals <- binomial_confidence_interval(dt[ASIN == "B08766L2BZ",]$ku_readthrough, dt[ASIN == "B08766L2BZ",]$prior_book_ku_rollsum)
+    
+    plot_ly(data = dt[ASIN == "B08766L2BZ"],
+            x = ~ Date) %>%
+      add_trace(y = ~ku_readthrough,
+                type = 'scatter',
+                mode = 'lines',
+                name = "VL KU Readthrough") %>%
+      add_ribbons(ymin = ~intervals$Lower,
+                  ymax = ~intervals$Upper,
+                  name = "VL 95% confidence interval",
+                  color = I("blue"),
+                  opacity = 0.3)
+    
+  })
+  
+  # Get sales readthrough rates
+  output$chart_sales_readthrough_all <- renderPlotly({
+    
+    plt <- plot_ly(data = dt,
+                   x = ~ Date,
+                   y = ~ sales_readthrough,
+                   color = ~ name,
+                   type = 'scatter',
+                   mode = 'lines') %>%
+      layout(yaxis = list(title = "Sales Readthrough",
+                          range = c(0, max(dt$sales_readthrough))),
+             title = "Sales Readthrough")
+  })
+  
+  # Get Viridian Legion Sales readthrough
+  output$chart_sales_readthrough_vl <- renderPlotly({
+    
+    intervals <- binomial_confidence_interval(dt[ASIN == "B08766L2BZ",]$sales_readthrough, dt[ASIN == "B08766L2BZ",]$prior_book_order_rollsum)
+    
+    plot_ly(data = dt[ASIN == "B08766L2BZ"],
+            x = ~ Date) %>%
+      add_trace(y = ~sales_readthrough,
+                type = 'scatter',
+                mode = 'lines',
+                name = "VL Sales Readthrough") %>%
+      add_ribbons(ymin = ~intervals$Lower,
+                  ymax = ~intervals$Upper,
+                  name = "VL 95% confidence interval",
+                  color = I("blue"),
+                  opacity = 0.3)
+    
+  })
+
 })
 
 # Get AMS US Ad performance chart
@@ -217,16 +248,10 @@ observe({
     
     req(data_output$combined_data_readthrough, data_output$dt)
 
-    intervals <- binomial_confidence_intervals(
+    intervals <- binomial_confidence_interval(
       data_output$dt$AMS_conversion_rate, 
       data_output$dt$AMS_clicks_rollingsum)
       
-    # cr_lower_bound <- pmax(0, data_output$dt$AMS_conversion_rate - 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
-    # cr_upper_bound <- pmax(0, data_output$dt$AMS_conversion_rate + 1.96 * sqrt(data_output$dt$AMS_conversion_rate * (1 - data_output$dt$AMS_conversion_rate) / data_output$dt$AMS_clicks_rollingsum))
-    # 
-    # cr_lower_bound[is.na(cr_lower_bound)] <- 0
-    # cr_upper_bound[is.na(cr_upper_bound)] <- 0
-
     plot_ly(data = data_output$dt,
                    x = ~ Date) %>%
       add_trace(y = ~AMS_conversion_rate,

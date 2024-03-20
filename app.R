@@ -103,7 +103,14 @@ ui <- navbarPage(
              ),
              column(
                6, plotlyOutput("chart_ku_readthrough_all")
-             ))
+             )),
+             fluidRow(br(),
+                      column(
+                        6, plotlyOutput("chart_sales_readthrough_vl")
+                      ),
+                      column(
+                        6, plotlyOutput("chart_ku_readthrough_vl")
+                      ))
            ),
            tabPanel("AMS",
                     br(),
