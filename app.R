@@ -17,9 +17,9 @@ ui <- navbarPage(
            ),
   tabPanel("Royalties",
            fluidRow(
-             column(3, uiOutput("series_dropdown_menu")),
-             column(3, sliderInput("historic_months", "Months of history to view", min = 1, max = 50, value = 4)),
-             column(3, sliderInput("ma_days", "Days to take moving average across", min = 1, max = 28, value = 7))
+             column(2, uiOutput("series_dropdown_menu")),
+             column(2, sliderInput("historic_months", "Months of history to view", min = 1, max = 50, value = 4)),
+             column(2, sliderInput("ma_days", "Days to take moving average across", min = 1, max = 28, value = 7))
            ),
            h2("Charts"),
            fluidRow(
