@@ -308,9 +308,9 @@ output$table_readthrough <- renderTable({
                                                 Marketplace %in% c("All", "Amazon.com", "Amazon.co.uk", "Amazon.com.au", "Amazon.ca") &
                                                 !is.na(sales_readthrough),
                                               ][, ":=" (`Sales Readthrough` = round(100 * sales_readthrough, 1),
-                                                        `Sales Sample Size` = round(order_rollsum, 0),
+                                                        `Sales Sample Size` = round(prior_book_order_rollsum, 0),
                                                         `KU Readthrough` = round(100 * ku_readthrough, 1),
-                                                        `KU Sample Size` = round(ku_rollsum, 1))]
+                                                        `KU Sample Size` = round(prior_book_ku_rollsum, 1))]
   
   return(dt[, .(Marketplace, name, `Sales Readthrough`, `Sales Sample Size`, `KU Readthrough`, `KU Sample Size`)])
   
