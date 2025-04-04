@@ -6,11 +6,11 @@ observe({
       data_output$combined_data,
       input$ku_payout_marketplace, 
       input$historic_months_ku)
-
+ 
   # filter the marketplace we want
   dt <- data_output$kdp_payment_data %>%
     .[Marketplace == input$ku_payout_marketplace &
-        royalty_source == "KENP Royalties",] %>%
+        royalty_source == "Subscriptions Royalties",] %>%
     .[order(-start_date),] %>%
     .[1:input$historic_months_ku,] %>%
     .[, .(start_date, end_date, Currency, Accrued_Royalty)]

@@ -28,6 +28,9 @@ load_kdp_files <- function(kdp_data_location){
     # If it's not already in the data then we process the file, otherwise skip
     if (!(file %in% existing_data_filenames)) {
       
+      # Read excel sheets
+      kdp_sheets <- excel_sheets(file.path(kdp_data_location, file))
+                              
       # All sales
       new_sales_data <- 
         read_excel(file.path(kdp_data_location, file), sheet = "Combined Sales") %>%
@@ -36,9 +39,17 @@ load_kdp_files <- function(kdp_data_location){
       validate_raw_data(new_sales_data, sales = TRUE)
       
       # Kindle unlimited page reads
-      new_kenp_data <- 
-        read_excel(file.path(kdp_data_location, file), sheet = "KENP Read") %>%
-        as.data.table
+      if ("KENP Read" %in% kdp_sheets) {
+        new_kenp_data <- 
+          read_excel(file.path(kdp_data_location, file), sheet = "KENP Read") %>%
+          as.data.table
+      } else {
+        new_kenp_data <- 
+          read_excel(file.path(kdp_data_location, file), sheet = "KENP") %>%
+          rename(`Kindle Edition Normalized Page (KENP) Read` = KENP,
+                 ASIN = `eBook ASIN`) %>%
+          as.data.table
+      }
       
       validate_raw_data(new_kenp_data, kenp = TRUE)
       
