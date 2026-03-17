@@ -6,7 +6,7 @@ observe({
       data_output$combined_data,
       input$ku_payout_marketplace, 
       input$historic_months_ku)
- 
+
   # filter the marketplace we want
   dt <- data_output$kdp_payment_data %>%
     .[Marketplace == input$ku_payout_marketplace &
