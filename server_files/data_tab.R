@@ -4,7 +4,7 @@
 observeEvent(input$load, {
  
   req(input$kenp_royalty_per_page_read)
-
+  
   # Get currency conversion info
   data_output$currency_lookup <- 
     get_currency_lookup(c("GBP", "USD", "CAD", "EUR", "INR", "BRL", "MXN", "AUD", "JPY"))

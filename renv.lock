@@ -900,7 +900,7 @@
     },
     "priceR": {
       "Package": "priceR",
-      "Version": "1.0.1",
+      "Version": "1.0.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -914,7 +914,7 @@
         "stringr",
         "tidyr"
       ],
-      "Hash": "a3d85106a5dedec9875d63b7ab2486bc"
+      "Hash": "c4b5544da34e8ff2031a86902f1306d4"
     },
     "progress": {
       "Package": "progress",

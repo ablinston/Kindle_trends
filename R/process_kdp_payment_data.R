@@ -4,7 +4,7 @@ process_kdp_payment_data <- function(data) {
 
   # For debugging
   # data <- load_kdp_payment_files("F:/Writing - Book/Data/KDP - payments")
-
+  
   # Compute custom columns
   data[, ":=" (
     start_date = as.Date(`Sales Period - Start Date`, "%Y-%m-%d"),
